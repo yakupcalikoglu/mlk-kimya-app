@@ -1,27 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-function getUser() {
-  const s = cookies().get('mlk_session')
-  if (!s) return null
-  try { return JSON.parse(s.value) } catch { return null }
+function getUser(req: NextRequest) {
+  const session = req.cookies.get('mlk_session')
+  if (!session) return null
+  try { return JSON.parse(session.value) } catch { return null }
 }
 
-export async function GET() {
-  const user = getUser()
+export async function GET(req: NextRequest) {
+  const user = getUser(req)
   if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
   const { data } = await supabase.from('mlk_kasa').select('*').order('tarih', { ascending: false })
   return NextResponse.json(data || [])
 }
 
 export async function POST(req: NextRequest) {
-  const user = getUser()
+  const user = getUser(req)
   if (!user || user.role === 'goruntule') return NextResponse.json({ error: 'Yetkisiz' }, { status: 403 })
   const body = await req.json()
   const { data, error } = await supabase.from('mlk_kasa').insert(body).select().single()
