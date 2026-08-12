@@ -11,7 +11,6 @@ const MENU = [
     { key: 'engin', ic: '👤', ad: 'Engin Hesabı' },
     { key: 'kasa', ic: '💰', ad: 'Operasyonel Kasa' },
     { key: 'sermaye', ic: '💼', ad: 'Sermaye Ödemeleri' },
-    { key: 'sermaye', ic: '💼', ad: 'Sermaye Ödemeleri' },
     { key: 'satis', ic: '🛒', ad: 'Satışlar' },
   ]},
   { grup: 'CARİ HESAPLAR', items: [
@@ -39,7 +38,7 @@ export default function Sidebar({ aktif, onChange, isOpen }: {
   const [cariler, setCariler] = useState<any[]>([])
 
   useEffect(() => {
-    fetch('/api/cariler').then(r => r.json()).then(d => {
+    fetch('/api/cariler', { credentials: 'include' }).then(r => r.json()).then(d => {
       if (Array.isArray(d)) setCariler(d)
     }).catch(() => {})
   }, [])
