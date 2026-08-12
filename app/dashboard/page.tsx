@@ -7,6 +7,8 @@ import TumCariler from '@/components/TumCariler'
 import CariDetay from '@/components/CariDetay'
 import OperasyonelKasa from '@/components/OperasyonelKasa'
 import Satislar from '@/components/Satislar'
+import Uretim from '@/components/Uretim'
+import HammaddeStogu from '@/components/HammaddeStogu'
 
 export default function Dashboard() {
   const [aktifSayfa, setAktifSayfa] = useState('ozet')
@@ -26,12 +28,13 @@ export default function Dashboard() {
   }
 
   const sayfaBasliklari: Record<string, string> = {
-    ozet: 'Özet Dashboard',
-    cariler: 'Tüm Cariler',
-    kasa: 'Operasyonel Kasa',
-    satis: 'Satışlar',
+    ozet: 'Özet Dashboard', cariler: 'Tüm Cariler',
+    kasa: 'Operasyonel Kasa', satis: 'Satışlar',
+    uretim: 'Üretim', hammadde: 'Hammadde Stoğu',
     cari_detay: 'Cari Detay',
   }
+
+  const sayfalar = ['ozet','cariler','kasa','satis','uretim','hammadde','cari_detay']
 
   return (
     <div className="app-layout">
@@ -44,10 +47,12 @@ export default function Dashboard() {
           {aktifSayfa === 'cariler'    && <TumCariler onCariSec={cariSec} />}
           {aktifSayfa === 'kasa'       && <OperasyonelKasa />}
           {aktifSayfa === 'satis'      && <Satislar onCariSec={cariSec} />}
+          {aktifSayfa === 'uretim'     && <Uretim />}
+          {aktifSayfa === 'hammadde'   && <HammaddeStogu />}
           {aktifSayfa === 'cari_detay' && aktifCariId && (
             <CariDetay cariId={aktifCariId} onBack={() => setAktifSayfa('cariler')} />
           )}
-          {!['ozet','cariler','kasa','satis','cari_detay'].includes(aktifSayfa) && (
+          {!sayfalar.includes(aktifSayfa) && (
             <div style={{ padding: 40, textAlign: 'center', color: 'var(--tx2)' }}>
               Bu sayfa yapım aşamasında...
             </div>
