@@ -11,7 +11,7 @@ export default function TumCariler({ onCariSec }: { onCariSec: (id: string) => v
   const [aramaKelime, setAramaKelime] = useState('')
 
   useEffect(() => {
-    fetch('/api/cariler').then(r => r.json()).then(d => {
+    fetch('/api/cariler', { credentials: 'include' }).then(r => r.json()).then(d => {
       if (Array.isArray(d)) setCariler(d)
       setYukleniyor(false)
     })

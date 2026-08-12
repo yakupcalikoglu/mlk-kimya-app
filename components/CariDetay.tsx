@@ -16,7 +16,7 @@ export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: 
   const [kaydediliyor, setKaydediliyor] = useState(false)
 
   async function yukle() {
-    const res = await fetch(`/api/cariler/${cariId}`)
+    const res = await fetch(`/api/cariler/${cariId}`, { credentials: 'include' })
     if (res.ok) setCari(await res.json())
     setYukleniyor(false)
   }

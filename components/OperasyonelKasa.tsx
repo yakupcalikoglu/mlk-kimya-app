@@ -16,8 +16,8 @@ export default function OperasyonelKasa() {
 
   async function yukle() {
     const [kRes, cRes] = await Promise.all([
-      fetch('/api/kasa'),
-      fetch('/api/cariler')
+      fetch('/api/kasa', { credentials: 'include' }),
+      fetch('/api/cariler', { credentials: 'include' })
     ])
     if (kRes.ok) setHareketler(await kRes.json())
     if (cRes.ok) setCariler(await cRes.json())
