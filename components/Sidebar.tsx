@@ -16,6 +16,7 @@ const MENU = [
   ]},
   { grup: 'CARİ HESAPLAR', items: [
     { key: 'cariler', ic: '👥', ad: 'Tüm Cariler' },
+    { key: 'virman', ic: '🔄', ad: 'Cari Virman' },
   ]},
   { grup: 'ÜRETİM', items: [
     { key: 'uretim', ic: '⚗️', ad: 'Üretim' },
