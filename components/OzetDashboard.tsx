@@ -23,15 +23,12 @@ export default function OzetDashboard({ onCariSec }: { onCariSec?: (id: string) 
   useEffect(() => {
     async function yukle() {
       try {
-        const [cRes, sRes] = await Promise.all([
+        const [cRes, kRes] = await Promise.all([
           fetch('/api/cariler'),
-          fetch('/api/sync')
+          fetch('/api/kasa')
         ])
         if (cRes.ok) setCariler(await cRes.json())
-        if (sRes.ok) {
-          const d = await sRes.json()
-          setKasa(d.kasa || [])
-        }
+        if (kRes.ok) setKasa(await kRes.json())
       } catch(e) {
         console.error(e)
       } finally {
