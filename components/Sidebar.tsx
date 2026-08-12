@@ -26,6 +26,7 @@ const MENU = [
     { key: 'maliyet', ic: '📉', ad: 'Üretim Maliyeti' },
   ]},
   { grup: 'BELGELER & AYARLAR', items: [
+    { key: 'fatura', ic: '✍️', ad: 'Fatura' },
     { key: 'rapor', ic: '📊', ad: 'Raporlar' },
     { key: 'ayarlar', ic: '⚙️', ad: 'Ayarlar' },
   ]},
