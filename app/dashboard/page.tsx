@@ -6,6 +6,7 @@ import OzetDashboard from '@/components/OzetDashboard'
 import TumCariler from '@/components/TumCariler'
 import CariDetay from '@/components/CariDetay'
 import OperasyonelKasa from '@/components/OperasyonelKasa'
+import Satislar from '@/components/Satislar'
 
 export default function Dashboard() {
   const [aktifSayfa, setAktifSayfa] = useState('ozet')
@@ -24,26 +25,30 @@ export default function Dashboard() {
     setSidebarAcik(false)
   }
 
-  const sayfaBasliklari: Record<string,string> = {
-    ozet: 'Özet Dashboard', cariler: 'Tüm Cariler',
-    kasa: 'Operasyonel Kasa', cari_detay: 'Cari Detay'
+  const sayfaBasliklari: Record<string, string> = {
+    ozet: 'Özet Dashboard',
+    cariler: 'Tüm Cariler',
+    kasa: 'Operasyonel Kasa',
+    satis: 'Satışlar',
+    cari_detay: 'Cari Detay',
   }
 
   return (
     <div className="app-layout">
-      <div className={`sb-overlay ${sidebarAcik?'open':''}`} onClick={()=>setSidebarAcik(false)} />
+      <div className={`sb-overlay ${sidebarAcik ? 'open' : ''}`} onClick={() => setSidebarAcik(false)} />
       <Sidebar aktif={aktifSayfa} onChange={sayfaDegis} isOpen={sidebarAcik} />
       <div className="main">
-        <Topbar onMenuToggle={()=>setSidebarAcik(!sidebarAcik)} baslik={sayfaBasliklari[aktifSayfa]||''} />
+        <Topbar onMenuToggle={() => setSidebarAcik(!sidebarAcik)} baslik={sayfaBasliklari[aktifSayfa] || ''} />
         <div className="page-content">
           {aktifSayfa === 'ozet'       && <OzetDashboard onCariSec={cariSec} />}
           {aktifSayfa === 'cariler'    && <TumCariler onCariSec={cariSec} />}
           {aktifSayfa === 'kasa'       && <OperasyonelKasa />}
+          {aktifSayfa === 'satis'      && <Satislar onCariSec={cariSec} />}
           {aktifSayfa === 'cari_detay' && aktifCariId && (
             <CariDetay cariId={aktifCariId} onBack={() => setAktifSayfa('cariler')} />
           )}
-          {!['ozet','cariler','kasa','cari_detay'].includes(aktifSayfa) && (
-            <div style={{padding:40,textAlign:'center',color:'var(--tx2)'}}>
+          {!['ozet','cariler','kasa','satis','cari_detay'].includes(aktifSayfa) && (
+            <div style={{ padding: 40, textAlign: 'center', color: 'var(--tx2)' }}>
               Bu sayfa yapım aşamasında...
             </div>
           )}
