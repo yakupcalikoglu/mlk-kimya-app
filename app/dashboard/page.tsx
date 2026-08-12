@@ -20,8 +20,13 @@ export default function Dashboard() {
   const [aktifCariId, setAktifCariId] = useState<string|null>(null)
 
   function sayfaDegis(s: string) {
-    setAktifSayfa(s)
-    setAktifCariId(null)
+    if (s.startsWith('cari_')) {
+      setAktifCariId(s.replace('cari_', ''))
+      setAktifSayfa('cari_detay')
+    } else {
+      setAktifSayfa(s)
+      setAktifCariId(null)
+    }
     setSidebarAcik(false)
   }
 
