@@ -1,0 +1,100 @@
+'use client'
+import { useEffect, useState } from 'react'
+
+function fmt(n: number) {
+  return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(n)
+}
+
+export default function UrunStogu() {
+  const [uretimler, setUretimler] = useState<any[]>([])
+  const [cariler, setCariler] = useState<any[]>([])
+  const [yukleniyor, setYukleniyor] = useState(true)
+
+  useEffect(() => {
+    async function yukle() {
+      const [uRes, cRes] = await Promise.all([
+        fetch('/api/uretim', { credentials: 'include' }),
+        fetch('/api/cariler', { credentials: 'include' })
+      ])
+      if (uRes.ok) setUretimler(await uRes.json())
+      if (cRes.ok) setCariler(await cRes.json())
+      setYukleniyor(false)
+    }
+    yukle()
+  }, [])
+
+  // Satılan bidonları hesapla
+  function satılanBidon(lot: string) {
+    let toplam = 0
+    cariler.forEach(c => {
+      (c.hareketler || []).forEach((h: any) => {
+        if ((h.tur === 'satis' || h.tur === 'bedelsiz_ver') && h.lot === lot) {
+          toplam += h.adet || 0
+        }
+      })
+    })
+    return toplam
+  }
+
+  // Her lot için stok durumu
+  const stoklar = uretimler.map(u => {
+    const topBidon = (u.bidonlar || []).reduce((a: number, b: any) => a + (b.adet || 0), 0)
+    const satilan = satılanBidon(u.lot)
+    const kalan = topBidon - satilan
+    return { ...u, topBidon, satilan, kalan }
+  })
+
+  const topUretilen = stoklar.reduce((a, s) => a + s.topBidon, 0)
+  const topSatilan = stoklar.reduce((a, s) => a + s.satilan, 0)
+  const topKalan = stoklar.reduce((a, s) => a + s.kalan, 0)
+
+  return (
+    <div>
+      <div className="sg" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
+        <div className="sc B"><div className="l">Toplam Üretilen</div><div className="v">{topUretilen}</div><div className="s">bidon</div></div>
+        <div className="sc R"><div className="l">Satılan</div><div className="v">{topSatilan}</div><div className="s">bidon</div></div>
+        <div className="sc G"><div className="l">Stokta Kalan</div><div className="v">{topKalan}</div><div className="s">bidon</div></div>
+        <div className="sc A"><div className="l">Lot Sayısı</div><div className="v">{uretimler.length}</div><div className="s">üretim</div></div>
+      </div>
+
+      <div className="card">
+        <div className="ch">📦 Ürün Stoğu (Lot Bazlı)</div>
+        <div className="tw">
+          <table>
+            <thead>
+              <tr>
+                <th>Lot</th><th>Ürün</th><th>Tarih</th>
+                <th className="tr">Üretilen</th><th className="tr">Satılan</th><th className="tr">Kalan</th>
+                <th>Bidon Dağılımı</th><th>Durum</th>
+              </tr>
+            </thead>
+            <tbody>
+              {yukleniyor && <tr><td colSpan={8} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
+              {stoklar.map(s => {
+                const durum = s.kalan <= 0 ? { yazi: 'Tükendi', renk: 'var(--r)', bg: 'var(--rbg)' }
+                  : s.kalan < 10 ? { yazi: 'Az Kaldı', renk: 'var(--a)', bg: 'var(--abg)' }
+                  : { yazi: 'Stokta', renk: 'var(--g)', bg: 'var(--gbg)' }
+                const bidonDetay = (s.bidonlar || []).map((b: any) => `${b.adet}×${b.boy}lt`).join(', ')
+                return (
+                  <tr key={s.id}>
+                    <td style={{ fontWeight: 600, color: 'var(--b)' }}>{s.lot}</td>
+                    <td>{s.urun}</td>
+                    <td className="tnw">{s.tarih}</td>
+                    <td className="tr">{s.topBidon}</td>
+                    <td className="tr" style={{ color: 'var(--r)' }}>{s.satilan}</td>
+                    <td className="tr" style={{ fontWeight: 700, color: durum.renk }}>{s.kalan}</td>
+                    <td style={{ fontSize: 11, color: 'var(--tx2)' }}>{bidonDetay || '—'}</td>
+                    <td><span className="badge" style={{ background: durum.bg, color: durum.renk }}>{durum.yazi}</span></td>
+                  </tr>
+                )
+              })}
+              {!yukleniyor && !uretimler.length && (
+                <tr><td colSpan={8} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Üretim kaydı yok</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  )
+}
