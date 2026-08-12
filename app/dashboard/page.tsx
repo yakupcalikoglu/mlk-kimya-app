@@ -19,6 +19,8 @@ import BedelsizNumune from '@/components/BedelsizNumune'
 import UrunStogu from '@/components/UrunStogu'
 import UretimMaliyeti from '@/components/UretimMaliyeti'
 import Raporlar from '@/components/Raporlar'
+import AnaKasa from '@/components/AnaKasa'
+import Fatura from '@/components/Fatura'
 
 export default function Dashboard() {
   const [aktifSayfa, setAktifSayfa] = useState('ozet')
@@ -51,6 +53,7 @@ export default function Dashboard() {
     sermaye: 'Sermaye', virman: 'Cari Virman',
     bedelsiz: 'Bedelsiz Numune', urun_stok: 'Ürün Stoğu',
     maliyet: 'Üretim Maliyeti', rapor: 'Raporlar', cari_detay: 'Cari Detay',
+    ana_kasa: 'Ana Kasa', fatura: 'Fatura',
   }
 
   const sayfalar = Object.keys(sayfaBasliklari)
@@ -63,6 +66,7 @@ export default function Dashboard() {
         <Topbar onMenuToggle={() => setSidebarAcik(!sidebarAcik)} baslik={sayfaBasliklari[aktifSayfa] || ''} />
         <div className="page-content">
           {aktifSayfa === 'ozet'       && <OzetDashboard onCariSec={cariSec} />}
+          {aktifSayfa === 'ana_kasa'   && <AnaKasa onCariSec={cariSec} />}
           {aktifSayfa === 'cariler'    && <TumCariler onCariSec={cariSec} />}
           {aktifSayfa === 'kasa'       && <OperasyonelKasa />}
           {aktifSayfa === 'satis'      && <Satislar onCariSec={cariSec} />}
@@ -78,6 +82,7 @@ export default function Dashboard() {
           {aktifSayfa === 'urun_stok'  && <UrunStogu />}
           {aktifSayfa === 'maliyet'    && <UretimMaliyeti />}
           {aktifSayfa === 'rapor'      && <Raporlar />}
+          {aktifSayfa === 'fatura'     && <Fatura />}
           {aktifSayfa === 'cari_detay' && aktifCariId && (
             <CariDetay cariId={aktifCariId} onBack={() => setAktifSayfa('cariler')} />
           )}
