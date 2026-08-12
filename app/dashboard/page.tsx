@@ -15,6 +15,7 @@ import MarmaraLift from '@/components/MarmaraLift'
 import EnginHesabi from '@/components/EnginHesabi'
 import SermayeOdemeleri from '@/components/SermayeOdemeleri'
 import CariVirman from '@/components/CariVirman'
+import BedelsizNumune from '@/components/BedelsizNumune'
 
 export default function Dashboard() {
   const [aktifSayfa, setAktifSayfa] = useState('ozet')
@@ -44,7 +45,8 @@ export default function Dashboard() {
     uretim: 'Üretim', hammadde: 'Hammadde Stoğu',
     htum: 'Tüm Hareketler', ayarlar: 'Ayarlar',
     mlift: 'Marmara Lift', engin: 'Engin Hesabı',
-    sermaye: 'Sermaye Ödemeleri', virman: 'Cari Virman', cari_detay: 'Cari Detay',
+    sermaye: 'Sermaye Ödemeleri', virman: 'Cari Virman',
+    bedelsiz: 'Bedelsiz Numune', cari_detay: 'Cari Detay',
   }
 
   const sayfalar = Object.keys(sayfaBasliklari)
@@ -68,6 +70,7 @@ export default function Dashboard() {
           {aktifSayfa === 'engin'      && <EnginHesabi />}
           {aktifSayfa === 'sermaye'    && <SermayeOdemeleri />}
           {aktifSayfa === 'virman'     && <CariVirman />}
+          {aktifSayfa === 'bedelsiz'   && <BedelsizNumune />}
           {aktifSayfa === 'cari_detay' && aktifCariId && (
             <CariDetay cariId={aktifCariId} onBack={() => setAktifSayfa('cariler')} />
           )}
