@@ -11,6 +11,7 @@ const MENU = [
     { key: 'engin', ic: '👤', ad: 'Engin Hesabı' },
     { key: 'kasa', ic: '💰', ad: 'Operasyonel Kasa' },
     { key: 'sermaye', ic: '💼', ad: 'Sermaye Ödemeleri' },
+    { key: 'sermaye', ic: '💼', ad: 'Sermaye Ödemeleri' },
     { key: 'satis', ic: '🛒', ad: 'Satışlar' },
   ]},
   { grup: 'CARİ HESAPLAR', items: [
