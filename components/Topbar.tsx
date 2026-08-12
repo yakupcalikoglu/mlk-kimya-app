@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 
-export default function Topbar({ onMenuToggle }: { onMenuToggle: () => void }) {
+export default function Topbar({ onMenuToggle, baslik }: { onMenuToggle: () => void, baslik?: string }) {
   const [tarih, setTarih] = useState('')
   const [syncDurum, setSyncDurum] = useState<'ok'|'yukleniyor'|'hata'>('ok')
 
@@ -14,7 +14,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle: () => void }) {
   return (
     <div className="topbar">
       <button className="mb-toggle" onClick={onMenuToggle}>☰</button>
-      <div style={{ fontWeight: 600, fontSize: '14px' }}>Marmara Lider Kimya</div>
+      <div style={{ fontWeight: 600, fontSize: '14px' }}>{baslik || 'Marmara Lider Kimya'}</div>
       <div style={{ marginLeft: 'auto', fontSize: '11px', color: 'var(--tx2)' }}>{tarih}</div>
       <div style={{ 
         fontSize: '11px', padding: '3px 8px', borderRadius: '99px',
