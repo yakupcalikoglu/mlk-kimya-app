@@ -53,9 +53,9 @@ export default function SermayeModule() {
   const yukle = useCallback(async () => {
     setLoading(true);
     const [o, od, ia] = await Promise.all([
-      fetch('/api/sermaye/ortaklar').then((r) => r.json()),
-      fetch('/api/sermaye/odemeler').then((r) => r.json()),
-      fetch('/api/sermaye/iadeler').then((r) => r.json()),
+      fetch('/api/sermaye/ortaklar', { credentials: 'include' }).then((r) => r.json()),
+      fetch('/api/sermaye/odemeler', { credentials: 'include' }).then((r) => r.json()),
+      fetch('/api/sermaye/iadeler', { credentials: 'include' }).then((r) => r.json()),
     ]);
     setOrtaklar(Array.isArray(o) ? o : []);
     setOdemeler(Array.isArray(od) ? od : []);
@@ -89,21 +89,21 @@ export default function SermayeModule() {
   // ─── Aksiyonlar ─────────────────────────────────────────
   async function ortakSil(id: number) {
     if (!confirm('Bu ortak ve tüm ödeme/iade kayıtları silinsin mi?')) return;
-    await fetch(`/api/sermaye/ortaklar/${id}`, { method: 'DELETE' });
+    await fetch(`/api/sermaye/ortaklar/${id}`, { method: 'DELETE', credentials: 'include' });
     yukle();
   }
   async function odemeSil(id: number) {
     if (!confirm('Bu sermaye ödeme kaydı silinsin mi?')) return;
-    await fetch(`/api/sermaye/odemeler/${id}`, { method: 'DELETE' });
+    await fetch(`/api/sermaye/odemeler/${id}`, { method: 'DELETE', credentials: 'include' });
     yukle();
   }
   async function odendiYap(id: number) {
-    await fetch(`/api/sermaye/odemeler/${id}`, { method: 'PATCH' });
+    await fetch(`/api/sermaye/odemeler/${id}`, { method: 'PATCH', credentials: 'include' });
     yukle();
   }
   async function iadeSil(id: number) {
     if (!confirm('Bu iade/mahsup kaydı silinsin mi?')) return;
-    await fetch(`/api/sermaye/iadeler/${id}`, { method: 'DELETE' });
+    await fetch(`/api/sermaye/iadeler/${id}`, { method: 'DELETE', credentials: 'include' });
     yukle();
   }
 
@@ -308,6 +308,7 @@ function OrtakModal({
     await fetch(url, {
       method: data ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(payload),
     });
     setSaving(false);
@@ -373,6 +374,7 @@ function OdemeModal({
     await fetch(url, {
       method: data ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(payload),
     });
     setSaving(false);
@@ -473,6 +475,7 @@ function IadeModal({
     await fetch('/api/sermaye/iadeler', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ ortak_id: selOrtakId, tarih, tur, tutar, aciklama, kasa_etki: kasaEtki }),
     });
     setSaving(false);
