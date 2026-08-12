@@ -4,13 +4,14 @@ import { useEffect, useState } from 'react'
 const MENU = [
   { grup: 'GENEL', items: [
     { key: 'ozet', ic: '📊', ad: 'Özet Dashboard' },
+    { key: 'ana_kasa', ic: '🏦', ad: 'Ana Kasa' },
     { key: 'htum', ic: '📋', ad: 'Tüm Hareketler' },
   ]},
   { grup: 'FİNANS', items: [
     { key: 'mlift', ic: '🏢', ad: 'Marmara Lift' },
     { key: 'engin', ic: '👤', ad: 'Engin Hesabı' },
     { key: 'kasa', ic: '💰', ad: 'Operasyonel Kasa' },
-    { key: 'sermaye', ic: '💼', ad: 'Sermaye Ödemeleri' },
+    { key: 'sermaye', ic: '💼', ad: 'Sermaye' },
     { key: 'satis', ic: '🛒', ad: 'Satışlar' },
   ]},
   { grup: 'CARİ HESAPLAR', items: [
