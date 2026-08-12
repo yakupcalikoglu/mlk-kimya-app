@@ -13,7 +13,7 @@ import TumHareketler from '@/components/TumHareketler'
 import Ayarlar from '@/components/Ayarlar'
 import MarmaraLift from '@/components/MarmaraLift'
 import EnginHesabi from '@/components/EnginHesabi'
-import SermayeOdemeleri from '@/components/SermayeOdemeleri'
+import SermayeModule from '@/components/SermayeModule'
 import CariVirman from '@/components/CariVirman'
 import BedelsizNumune from '@/components/BedelsizNumune'
 import UrunStogu from '@/components/UrunStogu'
@@ -48,7 +48,7 @@ export default function Dashboard() {
     uretim: 'Üretim', hammadde: 'Hammadde Stoğu',
     htum: 'Tüm Hareketler', ayarlar: 'Ayarlar',
     mlift: 'Marmara Lift', engin: 'Engin Hesabı',
-    sermaye: 'Sermaye Ödemeleri', virman: 'Cari Virman',
+    sermaye: 'Sermaye', virman: 'Cari Virman',
     bedelsiz: 'Bedelsiz Numune', urun_stok: 'Ürün Stoğu',
     maliyet: 'Üretim Maliyeti', rapor: 'Raporlar', cari_detay: 'Cari Detay',
   }
@@ -72,7 +72,7 @@ export default function Dashboard() {
           {aktifSayfa === 'ayarlar'    && <Ayarlar />}
           {aktifSayfa === 'mlift'      && <MarmaraLift />}
           {aktifSayfa === 'engin'      && <EnginHesabi />}
-          {aktifSayfa === 'sermaye'    && <SermayeOdemeleri />}
+          {aktifSayfa === 'sermaye'    && <SermayeModule />}
           {aktifSayfa === 'virman'     && <CariVirman />}
           {aktifSayfa === 'bedelsiz'   && <BedelsizNumune />}
           {aktifSayfa === 'urun_stok'  && <UrunStogu />}
