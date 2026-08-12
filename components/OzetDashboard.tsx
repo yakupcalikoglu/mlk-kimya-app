@@ -15,7 +15,7 @@ function StatCard({ baslik, deger, alt, tip }: { baslik: string, deger: string, 
   )
 }
 
-export default function OzetDashboard() {
+export default function OzetDashboard({ onCariSec }: { onCariSec?: (id: string) => void }) {
   const [cariler, setCariler] = useState<any[]>([])
   const [kasa, setKasa] = useState<any[]>([])
   const [yukleniyor, setYukleniyor] = useState(true)
@@ -99,7 +99,7 @@ export default function OzetDashboard() {
                   })
                   const bak = cariSonBakiye(c)
                   return (
-                    <tr key={c.id}>
+                    <tr key={c.id} style={{cursor:'pointer'}} onClick={() => onCariSec?.(c.id)}>
                       <td style={{ fontWeight: 500 }}>{c.ad}</td>
                       <td className="tr">₺{fmt(cSatis)}</td>
                       <td className="tr" style={{ color:'var(--g)' }}>₺{fmt(cTah)}</td>
