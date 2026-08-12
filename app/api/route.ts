@@ -7,24 +7,10 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-function getUser() {
+export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
   const s = cookies().get('mlk_session')
-  if (!s) return null
-  try { return JSON.parse(s.value) } catch { return null }
-}
-
-export async function GET() {
-  const user = getUser()
-  if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
-  const { data } = await supabase.from('mlk_kasa').select('*').order('tarih', { ascending: false })
-  return NextResponse.json(data || [])
-}
-
-export async function POST(req: NextRequest) {
-  const user = getUser()
-  if (!user || user.role === 'goruntule') return NextResponse.json({ error: 'Yetkisiz' }, { status: 403 })
-  const body = await req.json()
-  const { data, error } = await supabase.from('mlk_kasa').insert(body).select().single()
+  if (!s) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
+  const { error } = await supabase.from('mlk_kasa').delete().eq('id', params.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+  return NextResponse.json({ ok: true })
 }
