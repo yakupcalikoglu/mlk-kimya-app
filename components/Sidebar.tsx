@@ -22,6 +22,7 @@ const MENU = [
     { key: 'uretim', ic: '⚗️', ad: 'Üretim' },
     { key: 'hammadde', ic: '🧪', ad: 'Hammadde Stoğu' },
     { key: 'bedelsiz', ic: '🎁', ad: 'Bedelsiz Numune' },
+    { key: 'bedelsiz', ic: '🎁', ad: 'Bedelsiz Numune' },
     { key: 'urun_stok', ic: '📦', ad: 'Ürün Stoğu' },
     { key: 'maliyet', ic: '📉', ad: 'Üretim Maliyeti' },
   ]},
