@@ -7,44 +7,10 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-function getUser() {
-  const cookieStore = cookies()
-  const session = cookieStore.get('mlk_session')
-  if (!session) return null
-  try { return JSON.parse(session.value) } catch { return null }
-}
-
-export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
-  const user = getUser()
-  if (!user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
-
-  const { data, error } = await supabase
-    .from('mlk_cariler').select('*').eq('id', params.id).single()
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 404 })
-  return NextResponse.json(data)
-}
-
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const user = getUser()
-  if (!user || user.role === 'goruntule') return NextResponse.json({ error: 'Yetkisiz' }, { status: 403 })
-
-  const body = await req.json()
-  const { data, error } = await supabase
-    .from('mlk_cariler')
-    .update({ ...body, updated_at: new Date().toISOString() })
-    .eq('id', params.id)
-    .select().single()
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
-}
-
 export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
-  const user = getUser()
-  if (!user || user.role !== 'admin') return NextResponse.json({ error: 'Yetkisiz' }, { status: 403 })
-
-  const { error } = await supabase.from('mlk_cariler').delete().eq('id', params.id)
+  const s = cookies().get('mlk_session')
+  if (!s) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
+  const { error } = await supabase.from('mlk_kasa').delete().eq('id', params.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }
