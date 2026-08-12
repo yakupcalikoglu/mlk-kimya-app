@@ -35,7 +35,7 @@ export default function LoginPage() {
 
   return (
     <div style={{ minHeight:'100vh', background:'linear-gradient(135deg,#0e1720 0%,#162333 50%,#1e3a5f 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'20px' }}>
-      <div style={{ background:'#fff', borderRadius:'16px', padding:'32px 28px', width:'100%', maxWidth:'380px', boxShadow:'0 20px 60px rgba(0,0,0,.3)' }}>
+      <div className="login-card" style={{ background:'#fff', borderRadius:'16px', padding:'32px 28px', width:'100%', maxWidth:'380px', boxShadow:'0 20px 60px rgba(0,0,0,.3)' }}>
         <div style={{ display:'flex', alignItems:'center', gap:'12px', marginBottom:'24px', paddingBottom:'20px', borderBottom:'1px solid #e5e3dc' }}>
           <div style={{ width:'44px', height:'44px', background:'#2563eb', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontWeight:'700', fontSize:'13px' }}>MLK</div>
           <div>

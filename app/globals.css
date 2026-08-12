@@ -136,16 +136,58 @@ td { padding: 7px 11px; font-size: 12px; vertical-align: middle; }
 .sb-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 199; }
 
 @media (max-width: 768px) {
+  /* Sidebar */
   .mb-toggle { display: flex; align-items: center; }
   .sidebar { position: fixed; left: -240px; top: 0; z-index: 200; height: 100%; width: 240px; transition: left .25s; }
   .sidebar.open { left: 0; box-shadow: 6px 0 24px rgba(0,0,0,.35); }
   .sb-overlay.open { display: block; }
+
+  /* Layout */
   .main { width: 100%; }
   .page-content { padding: 10px; }
-  .sg { grid-template-columns: 1fr 1fr; }
-  .fg2 { grid-template-columns: 1fr; }
-  .topbar { padding: 0 8px; }
-  .modal-box { width: 96vw !important; }
+  .topbar { padding: 0 8px; height: 48px; }
+
+  /* Stat grid — 2 sütun */
+  .sg { grid-template-columns: 1fr 1fr !important; gap: 8px; margin-bottom: 10px; }
+  .sc { padding: 10px 12px; }
+  .sc .v { font-size: 16px; }
+
+  /* Form grid — tek sütun */
+  .fg2, .fg3 { grid-template-columns: 1fr !important; gap: 6px; }
+
+  /* Tablo — yatay kaydır */
+  .tw { overflow-x: auto; -webkit-overflow-scrolling: touch; max-height: none; }
+  table { font-size: 11px; min-width: 500px; }
+  th, td { padding: 5px 8px !important; }
+
+  /* Card */
+  .card { margin-bottom: 10px; border-radius: 10px; }
+  .ch { padding: 10px 12px; font-size: 12px; flex-wrap: wrap; gap: 6px; }
+  .ch-actions { width: 100%; display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* Butonlar */
+  .btn { padding: 6px 10px; font-size: 12px; }
+  .btn.xs { padding: 4px 7px; font-size: 11px; }
+  .td-actions { gap: 3px; }
+
+  /* Modal */
+  .modal-overlay { padding: 10px; align-items: flex-end; }
+  .modal-box { width: 100% !important; max-width: 100% !important; border-radius: 16px 16px 0 0; max-height: 90vh; }
+
+  /* İki sütunlu layout — tek sütun */
+  div[style*='grid-template-columns: 1fr 1fr'] { grid-template-columns: 1fr !important; }
+
+  /* Login */
+  .login-card { width: 94vw !important; padding: 20px 16px !important; }
+
+  /* Topbar başlık */
+  .topbar > div[style*='font-weight: 600'] { font-size: 13px; }
+
+  /* Info boxes */
+  .finfo, .fwarn, .fsuccess { font-size: 12px; padding: 8px 10px; }
+
+  /* Sidebar nav items */
+  .nav-item { padding: 8px 14px; font-size: 12px; }
 }
 
 /* Scrollbar */
