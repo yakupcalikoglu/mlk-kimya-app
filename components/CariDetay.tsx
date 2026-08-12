@@ -11,8 +11,9 @@ function today() {
 export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: () => void }) {
   const [cari, setCari] = useState<any>(null)
   const [yukleniyor, setYukleniyor] = useState(true)
-  const [modal, setModal] = useState<'satis'|'tahsilat'|null>(null)
+  const [modal, setModal] = useState<'satis'|'tahsilat'|'duzenle'|null>(null)
   const [form, setForm] = useState<any>({})
+  const [duzenlenenId, setDuzenlenenId] = useState<number|null>(null)
   const [kaydediliyor, setKaydediliyor] = useState(false)
 
   async function yukle() {
@@ -36,30 +37,53 @@ export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: 
     return (cari?.hareketler || []).filter((h:any) => h.tur === 'tahsilat').reduce((a:number,h:any) => a + (h.tahsilat||0), 0)
   }
 
+  function harDuzenleAc(h: any) {
+    setDuzenlenenId(h.id)
+    setForm({
+      tarih: h.tarih,
+      adet: h.adet,
+      birim: h.birim,
+      fatno: h.fatno,
+      tahsilat: h.tahsilat,
+      acik: h.acik,
+      tur: h.tur
+    })
+    setModal(h.tur === 'tahsilat' ? 'tahsilat' : 'satis')
+  }
+
   async function harEkle() {
     setKaydediliyor(true)
-    const hareketler = [...(cari.hareketler || [])]
-    const id = Date.now()
+    let hareketler = [...(cari.hareketler || [])]
 
-    if (modal === 'satis') {
-      const tutar = parseFloat(form.adet || 0) * parseFloat(form.birim || 0)
-      const oncekiBak = hareketler.length ? hareketler[hareketler.length-1].bakiye : 0
-      hareketler.push({
-        id, tarih: form.tarih || today(), tur: 'satis',
-        fatno: form.fatno || '', adet: parseFloat(form.adet||0),
-        birim: parseFloat(form.birim||0), tutar,
-        tahsilat: 0, bakiye: oncekiBak + tutar,
-        acik: form.acik || ''
+    if (duzenlenenId) {
+      // Düzenleme modu
+      hareketler = hareketler.map((h: any) => {
+        if (h.id !== duzenlenenId) return h
+        if (modal === 'satis') {
+          const tutar = parseFloat(form.adet || 0) * parseFloat(form.birim || 0)
+          return { ...h, tarih: form.tarih || today(), fatno: form.fatno || '', adet: parseFloat(form.adet||0), birim: parseFloat(form.birim||0), tutar, acik: form.acik || '' }
+        } else {
+          return { ...h, tarih: form.tarih || today(), tahsilat: parseFloat(form.tahsilat || 0), acik: form.acik || '' }
+        }
+      })
+      // Bakiyeleri yeniden hesapla
+      let bak = 0
+      hareketler = hareketler.map((h: any) => {
+        bak += (h.tutar || 0) - (h.tahsilat || 0)
+        return { ...h, bakiye: bak }
       })
     } else {
-      const tahsilat = parseFloat(form.tahsilat || 0)
-      const oncekiBak = hareketler.length ? hareketler[hareketler.length-1].bakiye : 0
-      hareketler.push({
-        id, tarih: form.tarih || today(), tur: 'tahsilat',
-        fatno: '', adet: 0, birim: 0, tutar: 0,
-        tahsilat, bakiye: oncekiBak - tahsilat,
-        acik: form.acik || ''
-      })
+      // Yeni ekleme
+      const id = Date.now()
+      if (modal === 'satis') {
+        const tutar = parseFloat(form.adet || 0) * parseFloat(form.birim || 0)
+        const oncekiBak = hareketler.length ? hareketler[hareketler.length-1].bakiye : 0
+        hareketler.push({ id, tarih: form.tarih || today(), tur: 'satis', fatno: form.fatno || '', adet: parseFloat(form.adet||0), birim: parseFloat(form.birim||0), tutar, tahsilat: 0, bakiye: oncekiBak + tutar, acik: form.acik || '' })
+      } else {
+        const tahsilat = parseFloat(form.tahsilat || 0)
+        const oncekiBak = hareketler.length ? hareketler[hareketler.length-1].bakiye : 0
+        hareketler.push({ id, tarih: form.tarih || today(), tur: 'tahsilat', fatno: '', adet: 0, birim: 0, tutar: 0, tahsilat, bakiye: oncekiBak - tahsilat, acik: form.acik || '' })
+      }
     }
 
     const res = await fetch(`/api/cariler/${cariId}`, {
@@ -72,6 +96,7 @@ export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: 
       await yukle()
       setModal(null)
       setForm({})
+      setDuzenlenenId(null)
     }
     setKaydediliyor(false)
   }
@@ -167,7 +192,10 @@ export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: 
                     {h.acik||'—'}
                   </td>
                   <td>
-                    <button className="btn xs dn" onClick={() => harSil(h.id)}>🗑</button>
+                    <div className="td-actions">
+                      <button className="btn xs te" onClick={() => harDuzenleAc(h)}>✏️</button>
+                      <button className="btn xs dn" onClick={() => harSil(h.id)}>🗑</button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -184,8 +212,8 @@ export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: 
         <div className="modal-overlay" onClick={() => setModal(null)}>
           <div className="modal-box sm" onClick={e => e.stopPropagation()}>
             <div className="modal-head">
-              {modal === 'satis' ? '+ Satış Ekle' : '📥 Tahsilat Ekle'}
-              <button onClick={() => setModal(null)} style={{background:'none',border:'none',cursor:'pointer',fontSize:18}}>×</button>
+              {modal === 'satis' ? (duzenlenenId ? '✏️ Satış Düzenle' : '+ Satış Ekle') : (duzenlenenId ? '✏️ Tahsilat Düzenle' : '📥 Tahsilat Ekle')}
+              <button onClick={() => { setModal(null); setDuzenlenenId(null); setForm({}) }} style={{background:'none',border:'none',cursor:'pointer',fontSize:18}}>×</button>
             </div>
             <div className="modal-body">
               <div className="fr"><label>Tarih</label>
