@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { cookies } from 'next/headers'
+import bcrypt from 'bcryptjs'
 
 export async function getKullanici() {
   const cookieStore = cookies()
@@ -17,12 +18,17 @@ export async function login(username: string, password: string) {
     .from('mlk_kullanicilar')
     .select('*')
     .eq('username', username.toLowerCase())
-    .eq('password', password)
     .eq('aktif', true)
     .single()
 
   if (error || !data) return { error: 'Kullanıcı adı veya şifre hatalı' }
-  return { user: data }
+
+  const hashli = typeof data.password === 'string' && data.password.startsWith('$2')
+  const dogru = hashli ? bcrypt.compareSync(password, data.password) : data.password === password
+  if (!dogru) return { error: 'Kullanıcı adı veya şifre hatalı' }
+
+  const { password: _pw, ...guvenli } = data
+  return { user: guvenli }
 }
 
 export function canDo(user: any, islem: string): boolean {
