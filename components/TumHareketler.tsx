@@ -1,5 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
+import SayiInput from '@/components/SayiInput'
+import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 function fmtTarih(t: string) {
@@ -272,7 +274,7 @@ function HizliEkleModal({ yon, onClose, onSaved }: { yon: 'giris'|'cikis'; onClo
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" {...overlayProps(onClose)}>
       <div className="modal-box sm" onClick={e => e.stopPropagation()}>
         <div className="modal-head">{yon === 'giris' ? '+ Giriş Ekle' : '+ Çıkış Ekle'}<button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button></div>
         <div className="modal-body">
@@ -283,7 +285,7 @@ function HizliEkleModal({ yon, onClose, onSaved }: { yon: 'giris'|'cikis'; onClo
           </div>
           <div className="fg2">
             <div className="fr"><label>Tarih</label><input type="date" value={tarih} onChange={e => setTarih(e.target.value)} /></div>
-            <div className="fr"><label>Tutar (₺) *</label><input type="number" value={tutar} onChange={e => setTutar(Number(e.target.value))} min="0" step="0.01" /></div>
+            <div className="fr"><label>Tutar (₺) *</label><SayiInput value={tutar} onChange={setTutar} /></div>
           </div>
           <div className="fr"><label>Açıklama *</label><input type="text" value={ad} onChange={e => setAd(e.target.value)} placeholder="ör: Ofis kirtasiye alımı" /></div>
         </div>

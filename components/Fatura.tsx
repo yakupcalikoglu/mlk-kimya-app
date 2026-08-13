@@ -1,5 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
+import SayiInput from '@/components/SayiInput'
+import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
@@ -186,7 +188,7 @@ export default function Fatura() {
 
       {/* Fatura Oluştur Modal */}
       {modal && (
-        <div className="modal-overlay" onClick={() => setModal(false)}>
+        <div className="modal-overlay" {...overlayProps(() => setModal(false))}>
           <div className="modal-box xl" onClick={e => e.stopPropagation()}>
             <div className="modal-head">
               ✍️ Fatura Oluştur
@@ -222,7 +224,7 @@ export default function Fatura() {
                           <tr key={k.id}>
                             <td><input type="text" value={k.urun} onChange={e => kalemGuncelle(k.id, 'urun', e.target.value)} placeholder="Ürün adı" style={{ width: '100%' }} /></td>
                             <td><input type="number" value={k.miktar} onChange={e => kalemGuncelle(k.id, 'miktar', Number(e.target.value))} min={0} step="0.01" style={{ width: '100%' }} /></td>
-                            <td><input type="number" value={k.birim} onChange={e => kalemGuncelle(k.id, 'birim', Number(e.target.value))} min={0} step="0.01" style={{ width: '100%' }} /></td>
+                            <td><SayiInput value={k.birim} onChange={v => kalemGuncelle(k.id, 'birim', v)} style={{ width: '100%' }} /></td>
                             <td>
                               <select value={k.kdv} onChange={e => kalemGuncelle(k.id, 'kdv', Number(e.target.value))} style={{ width: '100%' }}>
                                 <option value={0}>KDV Yok</option>
@@ -267,7 +269,7 @@ export default function Fatura() {
 
 function FaturaYazdirGorunumu({ fatura, onClose }: { fatura: Fatura; onClose: () => void }) {
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" {...overlayProps(onClose)}>
       <style>{`
         @media print {
           body * { visibility: hidden; }

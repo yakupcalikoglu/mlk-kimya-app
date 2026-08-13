@@ -1,5 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
+import SayiInput from '@/components/SayiInput'
+import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
@@ -183,7 +185,7 @@ export default function UretimMaliyeti() {
       </div>
 
       {modal && secili && (
-        <div className="modal-overlay" onClick={() => setModal(false)}>
+        <div className="modal-overlay" {...overlayProps(() => setModal(false))}>
           <div className="modal-box sm" onClick={e => e.stopPropagation()}>
             <div className="modal-head">
               ✏️ Maliyet Düzenle — {secili.lot}
@@ -254,7 +256,7 @@ function GiderModal({ data, onClose, onSaved }: { data: any | null; onClose: () 
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" {...overlayProps(onClose)}>
       <div className="modal-box sm" onClick={e => e.stopPropagation()}>
         <div className="modal-head">{data ? 'Gider Düzenle' : '+ Gider Ekle'}<button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button></div>
         <div className="modal-body">
@@ -273,7 +275,7 @@ function GiderModal({ data, onClose, onSaved }: { data: any | null; onClose: () 
                 {['KİRA','ELEKTRİK','SU','PERSONEL','BAKIM','SİGORTA','DİĞER'].map(k => <option key={k} value={k}>{k}</option>)}
               </select>
             </div>
-            <div className="fr"><label>Tutar (₺) *</label><input type="number" value={tutar} onChange={e => setTutar(Number(e.target.value))} min="0" step="0.01" /></div>
+            <div className="fr"><label>Tutar (₺) *</label><SayiInput value={tutar} onChange={setTutar} /></div>
           </div>
           <div className="fr"><label>Not</label><input type="text" value={not} onChange={e => setNot(e.target.value)} /></div>
         </div>

@@ -1,5 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
+import SayiInput from '@/components/SayiInput'
+import { overlayProps } from '@/lib/modalOverlay'
 import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
 function fmt(n: number) {
@@ -208,7 +210,7 @@ function TanimModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" {...overlayProps(onClose)}>
       <div className="modal-box sm" onClick={e => e.stopPropagation()}>
         <div className="modal-head">+ Yeni Hammadde Tanımla<button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button></div>
         <div className="modal-body">
@@ -263,7 +265,7 @@ function AlimModal({ hammaddeler, hammaddeId, onClose, onSaved }: {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" {...overlayProps(onClose)}>
       <div className="modal-box" onClick={e => e.stopPropagation()}>
         <div className="modal-head">+ Hammadde Alımı<button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button></div>
         <div className="modal-body">
@@ -279,11 +281,11 @@ function AlimModal({ hammaddeler, hammaddeId, onClose, onSaved }: {
           <div className="fr"><label>Tedarikçi</label><input type="text" value={tedarikci} onChange={e => setTedarikci(e.target.value)} /></div>
           <div className="fg2">
             <div className="fr"><label>Miktar *</label><input type="number" value={miktar} onChange={e => setMiktar(Number(e.target.value))} /></div>
-            <div className="fr"><label>Birim Fiyat (₺)</label><input type="number" value={birimFiyat} onChange={e => setBirimFiyat(Number(e.target.value))} /></div>
+            <div className="fr"><label>Birim Fiyat (₺)</label><SayiInput value={birimFiyat} onChange={setBirimFiyat} /></div>
           </div>
           <div className="finfo">Tutar: <b>₺{fmt(tutar)}</b></div>
           <div className="fg2" style={{ marginTop: 10 }}>
-            <div className="fr"><label>KK Maliyet (₺)</label><input type="number" value={kkMaliyet} onChange={e => setKkMaliyet(Number(e.target.value))} /></div>
+            <div className="fr"><label>KK Maliyet (₺)</label><SayiInput value={kkMaliyet} onChange={setKkMaliyet} /></div>
             <div className="fr"><label>Vade</label><input type="text" value={vade} onChange={e => setVade(e.target.value)} placeholder="ör: 30 gün" /></div>
           </div>
           <div className="fg2">
@@ -330,7 +332,7 @@ function CikisModal({ hammaddeler, hammaddeId, onClose, onSaved }: {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" {...overlayProps(onClose)}>
       <div className="modal-box sm" onClick={e => e.stopPropagation()}>
         <div className="modal-head">+ Manuel Çıkış<button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button></div>
         <div className="modal-body">

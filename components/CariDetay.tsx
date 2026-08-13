@@ -1,5 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
+import SayiInput from '@/components/SayiInput'
+import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
@@ -225,7 +227,7 @@ export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: 
 
       {/* Modal */}
       {modal && (
-        <div className="modal-overlay" onClick={() => setModal(null)}>
+        <div className="modal-overlay" {...overlayProps(() => setModal(null))}>
           <div className="modal-box sm" onClick={e => e.stopPropagation()}>
             <div className="modal-head">
               {modal === 'satis' ? (duzenlenenId ? '✏️ Satış Düzenle' : '+ Satış Ekle') : (duzenlenenId ? '✏️ Tahsilat Düzenle' : '📥 Tahsilat Ekle')}
@@ -244,7 +246,7 @@ export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: 
                     <input type="number" value={form.adet||''} onChange={e=>setForm({...form,adet:e.target.value})} min="0" step="1" />
                   </div>
                   <div className="fr"><label>Birim Fiyat (₺)</label>
-                    <input type="number" value={form.birim||''} onChange={e=>setForm({...form,birim:e.target.value})} min="0" step="0.01" />
+                    <SayiInput value={parseFloat(form.birim) || 0} onChange={v => setForm({ ...form, birim: v })} />
                   </div>
                 </div>
                 {form.adet && form.birim && (
@@ -252,7 +254,7 @@ export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: 
                 )}
               </> : <>
                 <div className="fr"><label>Tahsilat Tutarı (₺)</label>
-                  <input type="number" value={form.tahsilat||''} onChange={e=>setForm({...form,tahsilat:e.target.value})} min="0" step="0.01" />
+                  <SayiInput value={parseFloat(form.tahsilat) || 0} onChange={v => setForm({ ...form, tahsilat: v })} />
                 </div>
               </>}
               <div className="fr"><label>Açıklama</label>

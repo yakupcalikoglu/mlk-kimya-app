@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
@@ -113,7 +114,7 @@ export default function Ayarlar() {
       </div>
 
       {modal && (
-        <div className="modal-overlay" onClick={() => setModal(false)}>
+        <div className="modal-overlay" {...overlayProps(() => setModal(false))}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
             <div className="modal-head">
               {form.id ? '✏️ Kullanıcı Düzenle' : '+ Yeni Kullanıcı'}

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 function fmtTarih(t: string) {
@@ -156,7 +157,7 @@ function DuzeltmeModal({ uretim, onClose, onKaydet }: { uretim: any; onClose: ()
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" {...overlayProps(onClose)}>
       <div className="modal-box sm" onClick={e => e.stopPropagation()}>
         <div className="modal-head">✏️ Manuel Stok Düzeltmesi — {uretim.lot}<button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button></div>
         <div className="modal-body">

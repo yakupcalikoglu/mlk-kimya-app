@@ -1,5 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
+import SayiInput from '@/components/SayiInput'
+import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
@@ -276,7 +278,7 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
       </div>
 
       {modal && (
-        <div className="modal-overlay" onClick={() => setModal(false)}>
+        <div className="modal-overlay" {...overlayProps(() => setModal(false))}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
             <div className="modal-head">+ Satış Ekle<button onClick={() => setModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button></div>
             <div className="modal-body">
@@ -344,7 +346,7 @@ function TahsilatModal({ satis, onClose, onKaydet }: { satis: any; onClose: () =
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" {...overlayProps(onClose)}>
       <div className="modal-box sm" onClick={e => e.stopPropagation()}>
         <div className="modal-head">💰 Tahsilat Al<button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button></div>
         <div className="modal-body">
@@ -352,7 +354,7 @@ function TahsilatModal({ satis, onClose, onKaydet }: { satis: any; onClose: () =
             {satis.cariAd} — {satis.fatno ? `Fat.No: ${satis.fatno}` : ''} — Satış Tutarı: ₺{fmt(satis.tutar)} — Kalan: <b>₺{fmt(kalan)}</b>
           </div>
           <div className="fr" style={{ marginTop: 10 }}><label>Tahsil Edilecek Tutar (₺) *</label>
-            <input type="number" value={tutar} onChange={e => setTutar(Number(e.target.value))} max={kalan} />
+            <SayiInput value={tutar} onChange={setTutar} />
           </div>
         </div>
         <div className="modal-foot">

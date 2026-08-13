@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
@@ -183,7 +184,7 @@ export default function Uretim() {
 
       {/* Manuel Üretim Modal (eski davranış, stok etkisi yok) */}
       {manuelModal && (
-        <div className="modal-overlay" onClick={() => setManuelModal(false)}>
+        <div className="modal-overlay" {...overlayProps(() => setManuelModal(false))}>
           <div className="modal-box xl" onClick={e => e.stopPropagation()}>
             <div className="modal-head">⚗️ Manuel Üretim Ekle<button onClick={() => setManuelModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button></div>
             <div className="modal-body">
@@ -271,7 +272,7 @@ function ReceteModal({ data, hammaddeler, onClose, onSaved }: {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" {...overlayProps(onClose)}>
       <div className="modal-box" onClick={e => e.stopPropagation()}>
         <div className="modal-head">{data ? 'Reçete Düzenle' : '+ Yeni Reçete'}<button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button></div>
         <div className="modal-body">
@@ -366,7 +367,7 @@ function UretModal({ recete, hammaddeler, onClose, onSaved }: {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" {...overlayProps(onClose)}>
       <div className="modal-box" onClick={e => e.stopPropagation()}>
         <div className="modal-head">🚗 Reçeteden Üret — {recete.ad}<button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button></div>
         <div className="modal-body">

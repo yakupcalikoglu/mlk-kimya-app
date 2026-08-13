@@ -1,5 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
+import SayiInput from '@/components/SayiInput'
+import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
@@ -217,7 +219,7 @@ export default function CariVirman() {
       </div>
 
       {modal && (
-        <div className="modal-overlay" onClick={() => setModal(false)}>
+        <div className="modal-overlay" {...overlayProps(() => setModal(false))}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
             <div className="modal-head">
               🔄 Cari Virman
@@ -259,7 +261,7 @@ export default function CariVirman() {
 
               {konu === 'para' ? (
                 <div className="fr" style={{ marginTop: 10 }}><label>Tutar (₺) *</label>
-                  <input type="number" value={form.tutar || ''} onChange={e => setForm({ ...form, tutar: e.target.value })} min="0" step="0.01" />
+                  <SayiInput value={parseFloat(form.tutar) || 0} onChange={v => setForm({ ...form, tutar: v })} />
                 </div>
               ) : (
                 <div className="fg2" style={{ marginTop: 10 }}>

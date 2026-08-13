@@ -1,5 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
+import SayiInput from '@/components/SayiInput'
+import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
@@ -181,7 +183,7 @@ export default function OperasyonelKasa() {
       </div>
 
       {modal && (
-        <div className="modal-overlay" onClick={() => setModal(null)}>
+        <div className="modal-overlay" {...overlayProps(() => setModal(null))}>
           <div className="modal-box sm" onClick={e => e.stopPropagation()}>
             <div className="modal-head">
               {modal==='tahsilat' ? '📥 Tahsilat Al' : '📤 Ödeme Yap'}
@@ -200,7 +202,7 @@ export default function OperasyonelKasa() {
                 </div>
               )}
               <div className="fr"><label>Tutar (₺) *</label>
-                <input type="number" value={form.tutar||''} onChange={e=>setForm({...form,tutar:e.target.value})} min="0" step="0.01" />
+                <SayiInput value={parseFloat(form.tutar) || 0} onChange={v => setForm({ ...form, tutar: v })} />
               </div>
               <div className="fr"><label>Açıklama</label>
                 <input type="text" value={form.ad||''} onChange={e=>setForm({...form,ad:e.target.value})}

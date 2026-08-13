@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import SayiInput from '@/components/SayiInput'
+import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
@@ -349,7 +351,7 @@ function OrtakModal({ data, onClose, onSaved }: { data: Ortak | null; onClose: (
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" {...overlayProps(onClose)}>
       <div className="modal-box sm" onClick={e => e.stopPropagation()}>
         <div className="modal-head">
           {data ? 'Ortak Düzenle' : 'Yeni Ortak Ekle'}
@@ -406,7 +408,7 @@ function OdemeModal({ data, ortaklar, onClose, onSaved }: { data: Odeme | null; 
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" {...overlayProps(onClose)}>
       <div className="modal-box sm" onClick={e => e.stopPropagation()}>
         <div className="modal-head">
           {data ? 'Ödeme Düzenle' : 'Sermaye Ödemesi Ekle'}
@@ -426,7 +428,7 @@ function OdemeModal({ data, ortaklar, onClose, onSaved }: { data: Odeme | null; 
             <div className="fr"><label>Tarih</label><input type="date" value={tarih} onChange={e => setTarih(e.target.value)} /></div>
           </div>
           <div className="fg2">
-            <div className="fr"><label>Tutar (₺) *</label><input type="number" value={tutar} onChange={e => setTutar(Number(e.target.value))} /></div>
+            <div className="fr"><label>Tutar (₺) *</label><SayiInput value={tutar} onChange={setTutar} /></div>
             <div className="fr"><label>Ödeme Türü</label>
               <select value={tur} onChange={e => setTur(e.target.value as Odeme['tur'])}>
                 <option value="nakit">Nakit</option>
@@ -504,7 +506,7 @@ function IadeModal({ ortakId, ortaklar, odemeler, iadeler, onClose, onSaved }: {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" {...overlayProps(onClose)}>
       <div className="modal-box" onClick={e => e.stopPropagation()}>
         <div className="modal-head">
           ↩️ İade / Mahsup Ekle
@@ -535,7 +537,7 @@ function IadeModal({ ortakId, ortaklar, odemeler, iadeler, onClose, onSaved }: {
                 <option value="diger">📋 Diğer Mahsup</option>
               </select>
             </div>
-            <div className="fr"><label>Tutar (₺) *</label><input type="number" value={tutar} onChange={e => setTutar(Number(e.target.value))} /></div>
+            <div className="fr"><label>Tutar (₺) *</label><SayiInput value={tutar} onChange={setTutar} /></div>
           </div>
           <div className="fr"><label>Açıklama</label>
             <input type="text" value={aciklama} onChange={e => setAciklama(e.target.value)} placeholder="Örn: H2O2 kimyasal bedeli, Makine alımı mahsubu..." />

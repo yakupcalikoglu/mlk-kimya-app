@@ -1,5 +1,6 @@
 'use client'
 import { createContext, useContext, useState, useCallback, useRef } from 'react'
+import { overlayProps } from '@/lib/modalOverlay'
 
 type OnayFn = (mesaj: string) => Promise<boolean>
 const AdminOnayContext = createContext<OnayFn | null>(null)
@@ -56,7 +57,7 @@ export function AdminOnayProvider({ children }: { children: React.ReactNode }) {
     <AdminOnayContext.Provider value={confirmAdmin}>
       {children}
       {durum.acik && (
-        <div className="modal-overlay" onClick={iptal}>
+        <div className="modal-overlay" {...overlayProps(iptal)}>
           <div className="modal-box sm" onClick={e => e.stopPropagation()}>
             <div className="modal-head">
               🔒 Yönetici Onayı Gerekli
