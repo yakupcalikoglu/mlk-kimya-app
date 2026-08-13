@@ -26,6 +26,7 @@ export default function Raporlar() {
   const [siraCari, setSiraCari] = useState<SiraState>({ alan: 'ad', yon: 'asc' })
   const [siraKasa, setSiraKasa] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
   const [siraUretim, setSiraUretim] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
+  const [filtreCariId, setFiltreCariId] = useState('')
 
   useEffect(() => {
     async function yukle() {
@@ -71,7 +72,8 @@ export default function Raporlar() {
     const sonBak = c.hareketler?.length ? c.hareketler[c.hareketler.length-1].bakiye : 0
     return { id: c.id, ad: c.ad, satis, tahsilat, bidon, sonBak }
   }).filter(c => c.satis > 0 || c.tahsilat > 0)
-  const cariOzetlerSirali = siraliVeri(cariOzetler, siraCari)
+  const cariOzetlerFiltre = filtreCariId ? cariOzetler.filter(c => c.id === filtreCariId) : cariOzetler
+  const cariOzetlerSirali = siraliVeri(cariOzetlerFiltre, siraCari)
   const kasaSirali = siraliVeri(kasa.filter(h => donemFiltre(h.tarih)), siraKasa)
   const uretimZengin = donemUretim.map(u => ({ ...u, _bidon: (u.bidonlar||[]).reduce((a:number,b:any)=>a+(b.adet||0),0) }))
   const uretimSirali = siraliVeri(uretimZengin, siraUretim)
@@ -114,8 +116,8 @@ export default function Raporlar() {
       </div>
 
       {/* Sekmeler */}
-      <div className="card">
-        <div style={{ display: 'flex', borderBottom: '1px solid var(--bdr)' }}>
+      <div className="card" id="rapor-yazdir-alani">
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--bdr)', alignItems: 'center' }} className="no-print">
           {([['ozet','📊 Genel Özet'],['cari','👥 Cari Bazlı'],['kasa','💰 Kasa'],['uretim','⚗️ Üretim']] as const).map(([key, label]) => (
             <button key={key} onClick={() => setAktifRapor(key)}
               style={{ padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
@@ -124,7 +126,22 @@ export default function Raporlar() {
               {label}
             </button>
           ))}
+          {aktifRapor === 'cari' && (
+            <select value={filtreCariId} onChange={e => setFiltreCariId(e.target.value)} style={{ marginLeft: 'auto', marginRight: 10 }}>
+              <option value="">Tüm Cariler</option>
+              {cariler.map(c => <option key={c.id} value={c.id}>{c.ad}</option>)}
+            </select>
+          )}
+          <button className="btn xs" style={{ marginLeft: aktifRapor === 'cari' ? 0 : 'auto', marginRight: 10 }} onClick={() => window.print()}>🖨️ Yazdır / PDF</button>
         </div>
+        <style>{`
+          @media print {
+            body * { visibility: hidden; }
+            #rapor-yazdir-alani, #rapor-yazdir-alani * { visibility: visible; }
+            #rapor-yazdir-alani { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
+          }
+        `}</style>
 
         {aktifRapor === 'ozet' && (
           <div className="cb">

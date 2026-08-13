@@ -21,6 +21,7 @@ export default function MarmaraLift() {
   const [form, setForm] = useState<any>({ tarih: today() })
   const [kaydediliyor, setKaydediliyor] = useState(false)
   const [sira, setSira] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
+  const [filtreKategori, setFiltreKategori] = useState('')
 
   async function yukle() {
     const res = await fetch('/api/marmara-lift', { credentials: 'include' })
@@ -41,7 +42,7 @@ export default function MarmaraLift() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ tarih: form.tarih, ad: form.ad, tutar: parseFloat(form.tutar), yon: form.yon || 'giris' })
+      body: JSON.stringify({ tarih: form.tarih, ad: form.ad, tutar: parseFloat(form.tutar), yon: form.yon || 'giris', kategori: form.kategori || 'DİĞER' })
     })
     await yukle()
     setModal(false)
@@ -69,9 +70,13 @@ export default function MarmaraLift() {
 
       <div className="card">
         <div className="ch">🏢 Marmara Lift Hareketleri
-          <div className="ch-actions">
-            <button className="btn xs gn" onClick={() => { setForm({ tarih: today(), yon: 'giris' }); setModal(true) }}>+ Giriş</button>
-            <button className="btn xs dn" onClick={() => { setForm({ tarih: today(), yon: 'cikis' }); setModal(true) }}>+ Çıkış</button>
+          <div className="ch-actions" style={{ gap: 8 }}>
+            <select value={filtreKategori} onChange={e => setFiltreKategori(e.target.value)}>
+              <option value="">Tüm Kategoriler</option>
+              {['KİRA','NAKLİYE','HAMMADDE','DEMİRBAŞ','AMBALAJ','BAKIM','MARKA','İADE','DİĞER'].map(k => <option key={k} value={k}>{k}</option>)}
+            </select>
+            <button className="btn xs gn" onClick={() => { setForm({ tarih: today(), yon: 'giris', kategori: 'DİĞER' }); setModal(true) }}>+ Giriş</button>
+            <button className="btn xs dn" onClick={() => { setForm({ tarih: today(), yon: 'cikis', kategori: 'DİĞER' }); setModal(true) }}>+ Çıkış</button>
           </div>
         </div>
         <div className="tw">
@@ -80,23 +85,25 @@ export default function MarmaraLift() {
                 <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tarih'))}>Tarih{siraIkon(sira,'tarih')}</th>
                 <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'yon'))}>Yön{siraIkon(sira,'yon')}</th>
                 <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'ad'))}>Açıklama{siraIkon(sira,'ad')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'kategori'))}>Kategori{siraIkon(sira,'kategori')}</th>
                 <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tutar'))}>Tutar{siraIkon(sira,'tutar')}</th>
                 <th></th>
               </tr></thead>
             <tbody>
-              {yukleniyor && <tr><td colSpan={5} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
-              {siraliVeri(hareketler, sira).map(h => (
+              {yukleniyor && <tr><td colSpan={6} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
+              {siraliVeri(filtreKategori ? hareketler.filter(h => h.kategori === filtreKategori) : hareketler, sira).map(h => (
                 <tr key={h.id}>
                   <td className="tnw">{fmtTarih(h.tarih)}</td>
                   <td><span className={`badge ${h.yon === 'giris' ? 'bG' : 'bR'}`}>{h.yon === 'giris' ? 'Giriş' : 'Çıkış'}</span></td>
                   <td>{h.ad}</td>
+                  <td>{h.kategori ? <span className="badge bX">{h.kategori}</span> : '—'}</td>
                   <td className="tr" style={{ fontWeight: 700, color: h.yon === 'giris' ? 'var(--g)' : 'var(--r)' }}>
                     {h.yon === 'giris' ? '+' : '-'}₺{fmt(h.tutar)}
                   </td>
                   <td><button className="btn xs dn" onClick={() => harSil(h.id)}>🗑</button></td>
                 </tr>
               ))}
-              {!yukleniyor && !hareketler.length && <tr><td colSpan={5} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Hareket yok</td></tr>}
+              {!yukleniyor && !hareketler.length && <tr><td colSpan={6} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Hareket yok</td></tr>}
             </tbody>
           </table>
         </div>
@@ -118,6 +125,11 @@ export default function MarmaraLift() {
               </div>
               <div className="fr"><label>Tutar (₺) *</label>
                 <input type="number" value={form.tutar || ''} onChange={e => setForm({ ...form, tutar: e.target.value })} min="0" step="0.01" />
+              </div>
+              <div className="fr"><label>Kategori</label>
+                <select value={form.kategori || 'DİĞER'} onChange={e => setForm({ ...form, kategori: e.target.value })}>
+                  {['KİRA','NAKLİYE','HAMMADDE','DEMİRBAŞ','AMBALAJ','BAKIM','MARKA','İADE','DİĞER'].map(k => <option key={k} value={k}>{k}</option>)}
+                </select>
               </div>
             </div>
             <div className="modal-foot">

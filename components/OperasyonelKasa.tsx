@@ -90,7 +90,17 @@ export default function OperasyonelKasa() {
     await yukle()
   }
 
-  const tumHar = siraliVeri(hareketler, sira)
+  const tumHar = (() => {
+    // Satır bazlı bakiye her zaman gerçek kronolojik sırayla hesaplanır
+    // (görüntüleme sıralaması ne olursa olsun bu hesap sabit kalır).
+    const kronolojik = [...hareketler].sort((a, b) => (a.tarih || '').localeCompare(b.tarih || '') || (a.id || 0) - (b.id || 0))
+    let bak = 0
+    const zengin = kronolojik.map(h => {
+      bak += h.yon === 'giris' ? (h.tutar || 0) : -(h.tutar || 0)
+      return { ...h, _bakiye: bak }
+    })
+    return siraliVeri(zengin, sira)
+  })()
 
   return (
     <div>
@@ -127,11 +137,12 @@ export default function OperasyonelKasa() {
                 <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'yon'))}>Yön{siraIkon(sira,'yon')}</th>
                 <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'ad'))}>Açıklama{siraIkon(sira,'ad')}</th>
                 <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tutar'))}>Tutar{siraIkon(sira,'tutar')}</th>
+                <th className="tr">Bakiye</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-              {yukleniyor && <tr><td colSpan={5} style={{textAlign:'center',padding:20,color:'var(--tx2)'}}>Yükleniyor...</td></tr>}
+              {yukleniyor && <tr><td colSpan={6} style={{textAlign:'center',padding:20,color:'var(--tx2)'}}>Yükleniyor...</td></tr>}
               {tumHar.map(h => {
                 const cari = cariler.find(c => c.id === h.cari_ref)
                 return (
@@ -149,12 +160,13 @@ export default function OperasyonelKasa() {
                     <td className="tr" style={{fontWeight:700,color:h.yon==='giris'?'var(--g)':'var(--r)'}}>
                       {h.yon==='giris'?'+':'-'}₺{fmt(h.tutar)}
                     </td>
+                    <td className="tr" style={{fontWeight:600,color:h._bakiye>=0?'var(--tx1)':'var(--r)'}}>₺{fmt(h._bakiye)}</td>
                     <td><button className="btn xs dn" onClick={() => sil(h.id)}>🗑</button></td>
                   </tr>
                 )
               })}
               {!yukleniyor && !hareketler.length && (
-                <tr><td colSpan={5} style={{textAlign:'center',padding:20,color:'var(--tx2)'}}>Hareket yok</td></tr>
+                <tr><td colSpan={6} style={{textAlign:'center',padding:20,color:'var(--tx2)'}}>Hareket yok</td></tr>
               )}
             </tbody>
           </table>
