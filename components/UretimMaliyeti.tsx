@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
+import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
@@ -14,6 +15,7 @@ function fmt(n: number) {
 }
 
 export default function UretimMaliyeti() {
+  const confirmAdmin = useAdminOnay()
   const [uretimler, setUretimler] = useState<any[]>([])
   const [giderler, setGiderler] = useState<any[]>([])
   const [yukleniyor, setYukleniyor] = useState(true)
@@ -37,7 +39,7 @@ export default function UretimMaliyeti() {
   const topGenelGider = giderler.reduce((a, g) => a + (g.tutar || 0), 0)
 
   async function giderSil(id: number) {
-    if (!confirm('Bu gider kalemi silinsin mi?')) return
+    if (!(await confirmAdmin('Bu gider kalemi silinsin mi?'))) return
     await fetch(`/api/genel-giderler/${id}`, { method: 'DELETE', credentials: 'include' })
     await yukle()
   }

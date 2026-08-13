@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
+import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
@@ -15,6 +16,7 @@ function fmt(n: number) {
 function today() { return new Date().toISOString().split('T')[0] }
 
 export default function MarmaraLift() {
+  const confirmAdmin = useAdminOnay()
   const [hareketler, setHareketler] = useState<any[]>([])
   const [yukleniyor, setYukleniyor] = useState(true)
   const [modal, setModal] = useState(false)
@@ -51,7 +53,7 @@ export default function MarmaraLift() {
   }
 
   async function harSil(id: string) {
-    if (!confirm('Silinsin mi?')) return
+    if (!(await confirmAdmin('Silinsin mi?'))) return
     await fetch(`/api/marmara-lift/${id}`, { method: 'DELETE', credentials: 'include' })
     await yukle()
   }

@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
+import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
@@ -18,6 +19,7 @@ interface RKalem { hammadde_id: number; yuzde: number }
 interface Recete { id: number; ad: string; aciklama: string | null; standart_kg: number; kalemler: RKalem[] }
 
 export default function Uretim() {
+  const confirmAdmin = useAdminOnay()
   const [uretimler, setUretimler] = useState<any[]>([])
   const [receteler, setReceteler] = useState<Recete[]>([])
   const [hammaddeler, setHammaddeler] = useState<Hammadde[]>([])
@@ -70,7 +72,7 @@ export default function Uretim() {
   }
 
   async function uretimSil(id: number) {
-    if (!confirm('Bu üretim kaydı silinsin mi? (Otomatik düşülen hammadde stoğu GERİ EKLENMEZ — gerekirse Hammadde Stoğu sayfasından ilgili çıkış kaydını da silin.)')) return
+    if (!(await confirmAdmin('Bu üretim kaydı silinsin mi? (Otomatik düşülen hammadde stoğu GERİ EKLENMEZ — gerekirse Hammadde Stoğu sayfasından ilgili çıkış kaydını da silin.)'))) return
     await fetch(`/api/uretim/${id}`, { method: 'DELETE', credentials: 'include' })
     await yukle()
   }
@@ -82,7 +84,7 @@ export default function Uretim() {
   function bidonSil(i: number) { setForm({ ...form, bidonlar: form.bidonlar.filter((_: any, idx: number) => idx !== i) }) }
 
   async function receteSil(id: number) {
-    if (!confirm('Bu reçete silinsin mi?')) return
+    if (!(await confirmAdmin('Bu reçete silinsin mi?'))) return
     await fetch(`/api/receteler/${id}`, { method: 'DELETE', credentials: 'include' })
     await yukle()
   }

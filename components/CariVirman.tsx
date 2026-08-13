@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
+import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
@@ -23,6 +24,7 @@ const KONU_BILGI: Record<string, { ikon: string; ad: string; birimEtiket: string
 }
 
 export default function CariVirman() {
+  const confirmAdmin = useAdminOnay()
   const [cariler, setCariler] = useState<any[]>([])
   const [virmanlar, setVirmanlar] = useState<any[]>([])
   const [yukleniyor, setYukleniyor] = useState(true)
@@ -128,7 +130,7 @@ export default function CariVirman() {
   }
 
   async function virmanSil(v: any) {
-    if (!confirm('Bu virman silinsin mi? Cari hareketlerinden de kaldırılacak.')) return
+    if (!(await confirmAdmin('Bu virman silinsin mi? Cari hareketlerinden de kaldırılacak.'))) return
 
     const kaynak = cariler.find(c => c.id === v.kaynak_id)
     if (kaynak) {

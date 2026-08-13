@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
+import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
@@ -17,6 +18,7 @@ function fmt(n: number) {
 function today() { return new Date().toISOString().split('T')[0] }
 
 export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => void }) {
+  const confirmAdmin = useAdminOnay()
   const [cariler, setCariler] = useState<any[]>([])
   const [uretimler, setUretimler] = useState<any[]>([])
   const [yukleniyor, setYukleniyor] = useState(true)
@@ -142,7 +144,7 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
   }
 
   async function satisSil(cariId: string, harId: number) {
-    if (!confirm('Bu satış silinsin mi? Bağlı tahsilatlar da silinecek.')) return
+    if (!(await confirmAdmin('Bu satış silinsin mi? Bağlı tahsilatlar da silinecek.'))) return
     const c = cariler.find(x => x.id === cariId)
     // Bu satışa bağlı tahsilatları da birlikte kaldır
     let hareketler = (c?.hareketler || []).filter((h: any) => h.id !== harId && h.iliskiliSatisId !== harId)

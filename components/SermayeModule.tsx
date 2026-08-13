@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
+import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
@@ -49,6 +50,7 @@ function today() { return new Date().toISOString().split('T')[0] }
 
 // ─── Ana Bileşen ──────────────────────────────────────────
 export default function SermayeModule() {
+  const confirmAdmin = useAdminOnay()
   const [ortaklar, setOrtaklar] = useState<Ortak[]>([])
   const [odemeler, setOdemeler] = useState<Odeme[]>([])
   const [iadeler, setIadeler] = useState<Iade[]>([])
@@ -94,12 +96,12 @@ export default function SermayeModule() {
 
   // ─── Aksiyonlar ─────────────────────────────────────────
   async function ortakSil(id: number) {
-    if (!confirm('Bu ortak ve tüm ödeme/iade kayıtları silinsin mi?')) return
+    if (!(await confirmAdmin('Bu ortak ve tüm ödeme/iade kayıtları silinsin mi?'))) return
     await fetch(`/api/sermaye/ortaklar/${id}`, { method: 'DELETE', credentials: 'include' })
     yukle()
   }
   async function odemeSil(id: number) {
-    if (!confirm('Bu sermaye ödeme kaydı silinsin mi?')) return
+    if (!(await confirmAdmin('Bu sermaye ödeme kaydı silinsin mi?'))) return
     await fetch(`/api/sermaye/odemeler/${id}`, { method: 'DELETE', credentials: 'include' })
     yukle()
   }
@@ -108,7 +110,7 @@ export default function SermayeModule() {
     yukle()
   }
   async function iadeSil(id: number) {
-    if (!confirm('Bu iade/mahsup kaydı silinsin mi?')) return
+    if (!(await confirmAdmin('Bu iade/mahsup kaydı silinsin mi?'))) return
     await fetch(`/api/sermaye/iadeler/${id}`, { method: 'DELETE', credentials: 'include' })
     yukle()
   }

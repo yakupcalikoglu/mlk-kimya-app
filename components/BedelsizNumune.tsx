@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
+import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
@@ -18,6 +19,7 @@ function fmt(n: number) {
 function today() { return new Date().toISOString().split('T')[0] }
 
 export default function BedelsizNumune() {
+  const confirmAdmin = useAdminOnay()
   const [cariler, setCariler] = useState<any[]>([])
   const [uretimler, setUretimler] = useState<any[]>([])
   const [yukleniyor, setYukleniyor] = useState(true)
@@ -105,7 +107,7 @@ export default function BedelsizNumune() {
   }
 
   async function bedelsizSil(cariId: string, harId: number) {
-    if (!confirm('Bu bedelsiz kayıt silinsin mi?')) return
+    if (!(await confirmAdmin('Bu bedelsiz kayıt silinsin mi?'))) return
     const c = cariler.find(x => x.id === cariId)
     let hareketler = (c?.hareketler || []).filter((h: any) => h.id !== harId)
     let bak = 0

@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
+import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
@@ -15,6 +16,7 @@ function fmt(n: number) {
 function today() { return new Date().toISOString().split('T')[0] }
 
 export default function EnginHesabi() {
+  const confirmAdmin = useAdminOnay()
   const [harcamalar, setHarcamalar] = useState<any[]>([])
   const [tahsilatlar, setTahsilatlar] = useState<any[]>([])
   const [yukleniyor, setYukleniyor] = useState(true)
@@ -56,7 +58,7 @@ export default function EnginHesabi() {
   }
 
   async function sil(id: string, tip: 'harcama'|'tahsilat') {
-    if (!confirm('Silinsin mi?')) return
+    if (!(await confirmAdmin('Silinsin mi?'))) return
     await fetch(`/api/engin/${tip === 'harcama' ? 'harcamalar' : 'tahsilatlar'}/${id}`, { method: 'DELETE', credentials: 'include' })
     await yukle()
   }

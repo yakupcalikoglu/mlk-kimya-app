@@ -1,8 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
+import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
 export default function Ayarlar() {
+  const confirmAdmin = useAdminOnay()
   const [kullanicilar, setKullanicilar] = useState<any[]>([])
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState<any>({})
@@ -52,7 +54,7 @@ export default function Ayarlar() {
   }
 
   async function kulSil(id: number) {
-    if (!confirm('Bu kullanıcı silinsin mi?')) return
+    if (!(await confirmAdmin('Bu kullanıcı silinsin mi?'))) return
     await fetch(`/api/kullanicilar/${id}`, { method: 'DELETE', credentials: 'include' })
     await yukle()
   }

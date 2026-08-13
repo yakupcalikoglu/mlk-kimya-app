@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
+import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
@@ -15,6 +16,7 @@ function fmt(n: number) {
 function today() { return new Date().toISOString().split('T')[0] }
 
 export default function OperasyonelKasa() {
+  const confirmAdmin = useAdminOnay()
   const [hareketler, setHareketler] = useState<any[]>([])
   const [cariler, setCariler] = useState<any[]>([])
   const [yukleniyor, setYukleniyor] = useState(true)
@@ -85,7 +87,7 @@ export default function OperasyonelKasa() {
   }
 
   async function sil(id: string) {
-    if (!confirm('Bu hareket silinsin mi?')) return
+    if (!(await confirmAdmin('Bu hareket silinsin mi?'))) return
     await fetch(`/api/kasa/${id}`, { method: 'DELETE' })
     await yukle()
   }

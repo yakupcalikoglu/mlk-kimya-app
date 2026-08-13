@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(n || 0)
@@ -24,6 +25,7 @@ interface Cikis {
 }
 
 export default function HammaddeStogu() {
+  const confirmAdmin = useAdminOnay()
   const [hammaddeler, setHammaddeler] = useState<Hammadde[]>([])
   const [alimlar, setAlimlar] = useState<Alim[]>([])
   const [cikislar, setCikislar] = useState<Cikis[]>([])
@@ -47,17 +49,17 @@ export default function HammaddeStogu() {
   useEffect(() => { yukle() }, [])
 
   async function hammaddeSil(id: number) {
-    if (!confirm('Bu hammadde ve tüm alım/çıkış kayıtları silinsin mi?')) return
+    if (!(await confirmAdmin('Bu hammadde ve tüm alım/çıkış kayıtları silinsin mi?'))) return
     await fetch(`/api/hammadde/${id}`, { method: 'DELETE', credentials: 'include' })
     await yukle()
   }
   async function alimSil(id: number) {
-    if (!confirm('Bu alım kaydı silinsin mi? Stok yeniden hesaplanacak.')) return
+    if (!(await confirmAdmin('Bu alım kaydı silinsin mi? Stok yeniden hesaplanacak.'))) return
     await fetch(`/api/hammadde/alimlar/${id}`, { method: 'DELETE', credentials: 'include' })
     await yukle()
   }
   async function cikisSil(id: number) {
-    if (!confirm('Bu çıkış kaydı silinsin mi? Stok yeniden hesaplanacak.')) return
+    if (!(await confirmAdmin('Bu çıkış kaydı silinsin mi? Stok yeniden hesaplanacak.'))) return
     await fetch(`/api/hammadde/cikislar/${id}`, { method: 'DELETE', credentials: 'include' })
     await yukle()
   }

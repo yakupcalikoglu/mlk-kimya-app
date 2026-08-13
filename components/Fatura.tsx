@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
+import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
@@ -38,6 +39,7 @@ interface Fatura {
 }
 
 export default function Fatura() {
+  const confirmAdmin = useAdminOnay()
   const [faturalar, setFaturalar] = useState<Fatura[]>([])
   const [cariler, setCariler] = useState<any[]>([])
   const [yukleniyor, setYukleniyor] = useState(true)
@@ -121,7 +123,7 @@ export default function Fatura() {
   }
 
   async function sil(id: number) {
-    if (!confirm('Bu fatura silinsin mi?')) return
+    if (!(await confirmAdmin('Bu fatura silinsin mi?'))) return
     await fetch(`/api/faturalar/${id}`, { method: 'DELETE', credentials: 'include' })
     yukle()
   }

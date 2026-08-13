@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
+import { useAdminOnay } from '@/components/AdminOnaySistemi'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
@@ -17,6 +18,7 @@ function today() {
 }
 
 export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: () => void }) {
+  const confirmAdmin = useAdminOnay()
   const [cari, setCari] = useState<any>(null)
   const [yukleniyor, setYukleniyor] = useState(true)
   const [modal, setModal] = useState<'satis'|'tahsilat'|'duzenle'|null>(null)
@@ -111,7 +113,7 @@ export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: 
   }
 
   async function harSil(harId: number) {
-    if (!confirm('Bu hareket silinsin mi?')) return
+    if (!(await confirmAdmin('Bu hareket silinsin mi?'))) return
     const hareketler = (cari.hareketler || []).filter((h:any) => h.id !== harId)
     // Bakiyeleri yeniden hesapla
     let bak = 0
