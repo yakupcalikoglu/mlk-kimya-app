@@ -8,74 +8,100 @@ function fmtTarih(t: string) {
   if (!y || !m || !d) return t
   return `${d}/${m}/${y}`
 }
-
 function fmt(n: number) {
-  return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(n)
+  return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(n || 0)
+}
+function today() { return new Date().toISOString().split('T')[0] }
+
+const TUR_ETIKET: Record<string, string> = {
+  satis: 'Satış', tahsilat: 'Tahsilat',
+  virman_giris: 'Virman Giriş', virman_cikis: 'Virman Çıkış',
+  bedelsiz_ver: 'Bedelsiz',
 }
 
 export default function TumHareketler({ onCariSec }: { onCariSec?: (id: string) => void }) {
   const [cariler, setCariler] = useState<any[]>([])
   const [kasa, setKasa] = useState<any[]>([])
+  const [ml, setMl] = useState<any[]>([])
+  const [enginHar, setEnginHar] = useState<any[]>([])
+  const [enginTah, setEnginTah] = useState<any[]>([])
+  const [sermayeOdeme, setSermayeOdeme] = useState<any[]>([])
+  const [sermayeIade, setSermayeIade] = useState<any[]>([])
   const [yukleniyor, setYukleniyor] = useState(true)
-  const [aktifSekme, setAktifSekme] = useState<'kasa'|'cari'|'tumü'>('tumü')
+  const [aktifSekme, setAktifSekme] = useState<'tumü'|'kasa'|'cari'|'mlift'|'engin'|'sermaye'>('tumü')
   const [filtreCari, setFiltreCari] = useState('')
   const [filtreBaslangic, setFiltreBaslangic] = useState('')
   const [filtreBitis, setFiltreBitis] = useState('')
   const [sira, setSira] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
+  const [ekleModal, setEkleModal] = useState<{ open: boolean; yon: 'giris'|'cikis' }>({ open: false, yon: 'giris' })
 
-  useEffect(() => {
-    async function yukle() {
-      const [cRes, kRes] = await Promise.all([
-        fetch('/api/cariler', { credentials: 'include' }),
-        fetch('/api/kasa', { credentials: 'include' })
-      ])
-      if (cRes.ok) setCariler(await cRes.json())
-      if (kRes.ok) setKasa(await kRes.json())
-      setYukleniyor(false)
-    }
-    yukle()
-  }, [])
+  async function yukle() {
+    const [cRes, kRes, mlRes, ehRes, etRes, soRes, siRes] = await Promise.all([
+      fetch('/api/cariler', { credentials: 'include' }),
+      fetch('/api/kasa', { credentials: 'include' }),
+      fetch('/api/marmara-lift', { credentials: 'include' }),
+      fetch('/api/engin/harcamalar', { credentials: 'include' }),
+      fetch('/api/engin/tahsilatlar', { credentials: 'include' }),
+      fetch('/api/sermaye/odemeler', { credentials: 'include' }),
+      fetch('/api/sermaye/iadeler', { credentials: 'include' }),
+    ])
+    if (cRes.ok) setCariler(await cRes.json())
+    if (kRes.ok) setKasa(await kRes.json())
+    if (mlRes.ok) setMl(await mlRes.json())
+    if (ehRes.ok) setEnginHar(await ehRes.json())
+    if (etRes.ok) setEnginTah(await etRes.json())
+    if (soRes.ok) setSermayeOdeme(await soRes.json())
+    if (siRes.ok) setSermayeIade(await siRes.json())
+    setYukleniyor(false)
+  }
+  useEffect(() => { yukle() }, [])
 
-  // Tüm cari hareketleri
   const cariHareketler = cariler.flatMap(c =>
-    (c.hareketler || []).map((h: any) => ({
-      ...h, kaynak: 'cari', cariAd: c.ad, cariId: c.id
-    }))
+    (c.hareketler || []).map((h: any) => ({ ...h, kaynak: 'cari', cariAd: c.ad, cariId: c.id }))
   )
+  const kasaHareketler = kasa.map(h => ({ ...h, kaynak: 'kasa' }))
+  const mlHareketler = ml.map((h: any) => ({ ...h, kaynak: 'mlift' }))
+  const enginHareketler = [
+    ...enginHar.map((h: any) => ({ ...h, kaynak: 'engin', yon: 'cikis', tip: 'Harcama' })),
+    ...enginTah.map((h: any) => ({ ...h, kaynak: 'engin', yon: 'giris', tip: 'Tahsilat' })),
+  ]
+  const sermayeHareketler = [
+    ...sermayeOdeme.map((h: any) => ({ ...h, kaynak: 'sermaye', yon: 'giris', tip: 'Ödeme', ad: `${h.ortak_ad} — ${h.aciklama || 'Sermaye ödemesi'}` })),
+    ...sermayeIade.map((h: any) => ({ ...h, kaynak: 'sermaye', yon: 'cikis', tip: 'İade/Mahsup', ad: `${h.ortak_ad} — ${h.aciklama || 'İade'}` })),
+  ]
 
-  // Kasa hareketleri
-  const kasaHareketler = kasa.map(h => ({
-    ...h, kaynak: 'kasa', tarih: h.tarih,
-    ad: h.ad, tutar: h.tutar, yon: h.yon
-  }))
-
-  // Filtrele
   function filtrele(liste: any[]) {
     return liste.filter(h => {
       if (filtreBaslangic && h.tarih < filtreBaslangic) return false
       if (filtreBitis && h.tarih > filtreBitis) return false
       if (filtreCari && h.cariId !== filtreCari) return false
       return true
-    }).sort((a, b) => (b.tarih || '').localeCompare(a.tarih || ''))
+    })
   }
 
   const kasaFiltre = filtrele(kasaHareketler)
   const cariFiltre = filtrele(cariHareketler)
-  const tumFiltre = filtrele([...kasaHareketler, ...cariHareketler])
+  const mlFiltre = filtrele(mlHareketler)
+  const enginFiltre = filtrele(enginHareketler)
+  const sermayeFiltre = filtrele(sermayeHareketler)
+  const tumFiltre = filtrele([...kasaHareketler, ...cariHareketler, ...mlHareketler, ...enginHareketler, ...sermayeHareketler])
 
-  const gosterilenOnce = aktifSekme === 'kasa' ? kasaFiltre
-    : aktifSekme === 'cari' ? cariFiltre : tumFiltre
+  const gosterilenOnce =
+    aktifSekme === 'kasa' ? kasaFiltre :
+    aktifSekme === 'cari' ? cariFiltre :
+    aktifSekme === 'mlift' ? mlFiltre :
+    aktifSekme === 'engin' ? enginFiltre :
+    aktifSekme === 'sermaye' ? sermayeFiltre : tumFiltre
 
   const gosterilenZengin = gosterilenOnce.map(h => {
-    const isKasa = h.kaynak === 'kasa'
-    const _tutar = isKasa ? h.tutar : (h.tur === 'tahsilat' ? h.tahsilat : h.tutar)
-    const _tur = isKasa
-      ? (h.yon === 'giris' ? 'Kasa Giriş' : 'Kasa Çıkış')
-      : (h.tur === 'satis' ? 'Satış' : h.tur === 'tahsilat' ? 'Tahsilat' : h.tur)
-    const _kaynakAd = isKasa ? 'Kasa' : (h.cariAd || '')
-    // Genel Giriş/Çıkış yönü: kasa girişi veya cari tahsilatı = Giriş (para bize geldi);
-    // kasa çıkışı veya cari satışı (borç doğuran) = Çıkış (para gitti/borç arttı)
-    const _yon = isKasa ? h.yon : (h.tur === 'tahsilat' ? 'giris' : 'cikis')
+    const kaynakAdlari: Record<string, string> = { kasa: 'Kasa', mlift: 'Marmara Lift', engin: 'Engin', sermaye: 'Sermaye' }
+    const _tutar = h.kaynak === 'cari' ? (h.tur === 'tahsilat' ? h.tahsilat : h.tutar) : h.tutar
+    const _tur = h.kaynak === 'cari' ? (TUR_ETIKET[h.tur] || h.tur)
+      : h.kaynak === 'kasa' ? (h.yon === 'giris' ? 'Kasa Giriş' : 'Kasa Çıkış')
+      : h.kaynak === 'mlift' ? (h.yon === 'giris' ? 'ML Giriş' : 'ML Çıkış')
+      : h.tip
+    const _kaynakAd = h.kaynak === 'cari' ? (h.cariAd || '') : kaynakAdlari[h.kaynak]
+    const _yon = h.kaynak === 'cari' ? (h.tur === 'tahsilat' ? 'giris' : (h.tur === 'virman_giris' ? 'giris' : 'cikis')) : h.yon
     return { ...h, _tutar: _tutar || 0, _tur, _kaynakAd, _yon }
   })
   const gosterilen = siraliVeri(gosterilenZengin, sira)
@@ -87,7 +113,6 @@ export default function TumHareketler({ onCariSec }: { onCariSec?: (id: string) 
 
   return (
     <div>
-      {/* Özet kartlar */}
       <div className="sg" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
         <div className="sc G"><div className="l">Kasa Girişi</div><div className="v">₺{fmt(kasaGelir)}</div></div>
         <div className="sc R"><div className="l">Kasa Çıkışı</div><div className="v">₺{fmt(kasaGider)}</div></div>
@@ -95,7 +120,6 @@ export default function TumHareketler({ onCariSec }: { onCariSec?: (id: string) 
         <div className="sc A"><div className="l">Tahsilat</div><div className="v">₺{fmt(cariTah)}</div></div>
       </div>
 
-      {/* Filtreler */}
       <div className="card" style={{ marginBottom: 14 }}>
         <div className="cb" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <div className="fr" style={{ margin: 0 }}>
@@ -116,16 +140,24 @@ export default function TumHareketler({ onCariSec }: { onCariSec?: (id: string) 
               {cariler.map(c => <option key={c.id} value={c.id}>{c.ad}</option>)}
             </select>
           </div>
-          <button className="btn xs" onClick={() => { setFiltreBaslangic(''); setFiltreBitis(''); setFiltreCari('') }}>
-            Sıfırla
-          </button>
+          <button className="btn xs" onClick={() => { setFiltreBaslangic(''); setFiltreBitis(''); setFiltreCari('') }}>Sıfırla</button>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+            <button className="btn xs gn" onClick={() => setEkleModal({ open: true, yon: 'giris' })}>+ Giriş</button>
+            <button className="btn xs dn" onClick={() => setEkleModal({ open: true, yon: 'cikis' })}>+ Çıkış</button>
+          </div>
         </div>
       </div>
 
-      {/* Sekmeler */}
       <div className="card">
-        <div style={{ display: 'flex', borderBottom: '1px solid var(--bdr)' }}>
-          {([['tumü', '📋 Tümü'], ['kasa', '💰 Kasa'], ['cari', '👥 Cari']] as const).map(([key, label]) => (
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--bdr)', flexWrap: 'wrap' }}>
+          {([
+            ['tumü', '📋 Tümü', tumFiltre.length],
+            ['kasa', '💰 Kasa', kasaFiltre.length],
+            ['cari', '👥 Cari', cariFiltre.length],
+            ['mlift', '🏢 Marmara Lift', mlFiltre.length],
+            ['engin', '👤 Engin', enginFiltre.length],
+            ['sermaye', '💼 Sermaye', sermayeFiltre.length],
+          ] as const).map(([key, label, count]) => (
             <button key={key} onClick={() => setAktifSekme(key)}
               style={{
                 padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer',
@@ -133,9 +165,7 @@ export default function TumHareketler({ onCariSec }: { onCariSec?: (id: string) 
                 borderBottom: aktifSekme === key ? '2px solid var(--acc)' : '2px solid transparent',
                 color: aktifSekme === key ? 'var(--acc)' : 'var(--tx2)'
               }}>
-              {label} <span style={{ fontSize: 10, opacity: .7 }}>
-                ({key === 'tumü' ? tumFiltre.length : key === 'kasa' ? kasaFiltre.length : cariFiltre.length})
-              </span>
+              {label} <span style={{ fontSize: 10, opacity: .7 }}>({count})</span>
             </button>
           ))}
         </div>
@@ -154,34 +184,24 @@ export default function TumHareketler({ onCariSec }: { onCariSec?: (id: string) 
             <tbody>
               {yukleniyor && <tr><td colSpan={6} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
               {gosterilen.map((h, i) => {
-                const isKasa = h.kaynak === 'kasa'
-                const tutar = h._tutar
-                const pozitif = isKasa ? h.yon === 'giris' : h.tur === 'tahsilat'
-                const tur = h._tur
-
+                const pozitif = h._yon === 'giris'
+                const acik = h.kaynak === 'cari' ? (h.acik || h.fatno || '—')
+                  : h.kaynak === 'sermaye' ? h.ad
+                  : h.ad
                 return (
                   <tr key={i}>
                     <td className="tnw">{fmtTarih(h.tarih)}</td>
                     <td>
-                      {isKasa
-                        ? <span className="badge bA">Kasa</span>
-                        : <span className="badge bB" style={{ cursor: 'pointer' }}
-                            onClick={() => onCariSec?.(h.cariId)}>
-                            {h.cariAd?.split(' ')[0]}
-                          </span>
+                      {h.kaynak === 'cari'
+                        ? <span className="badge bB" style={{ cursor: 'pointer' }} onClick={() => onCariSec?.(h.cariId)}>{h.cariAd?.split(' ')[0]}</span>
+                        : <span className="badge bX">{h._kaynakAd}</span>
                       }
                     </td>
-                    <td>
-                      <span className={`badge ${h._yon === 'giris' ? 'bG' : 'bR'}`}>{h._yon === 'giris' ? '↓ Giriş' : '↑ Çıkış'}</span>
-                    </td>
-                    <td>
-                      <span className={`badge ${pozitif ? 'bG' : 'bR'}`}>{tur}</span>
-                    </td>
-                    <td style={{ fontSize: 11, color: 'var(--tx2)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {isKasa ? h.ad : (h.acik || h.fatno || '—')}
-                    </td>
+                    <td><span className={`badge ${pozitif ? 'bG' : 'bR'}`}>{pozitif ? '↓ Giriş' : '↑ Çıkış'}</span></td>
+                    <td><span className={`badge ${pozitif ? 'bG' : 'bR'}`}>{h._tur}</span></td>
+                    <td style={{ fontSize: 11, color: 'var(--tx2)', maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{acik}</td>
                     <td className="tr" style={{ fontWeight: 700, color: pozitif ? 'var(--g)' : 'var(--r)' }}>
-                      {pozitif ? '+' : '-'}₺{fmt(tutar || 0)}
+                      {pozitif ? '+' : '-'}₺{fmt(h._tutar || 0)}
                     </td>
                   </tr>
                 )
@@ -194,6 +214,82 @@ export default function TumHareketler({ onCariSec }: { onCariSec?: (id: string) 
         </div>
         <div style={{ padding: '9px 15px', background: 'var(--surf2)', borderTop: '1px solid var(--bdr)', fontSize: 12 }}>
           Toplam <b>{gosterilen.length}</b> hareket
+        </div>
+      </div>
+
+      {ekleModal.open && (
+        <HizliEkleModal
+          yon={ekleModal.yon}
+          onClose={() => setEkleModal({ open: false, yon: 'giris' })}
+          onSaved={yukle}
+        />
+      )}
+    </div>
+  )
+}
+
+function HizliEkleModal({ yon, onClose, onSaved }: { yon: 'giris'|'cikis'; onClose: () => void; onSaved: () => void }) {
+  const secenekler = yon === 'giris'
+    ? [['kasa', '💰 Operasyonel Kasa'], ['mlift', '🏢 Marmara Lift'], ['engin_tahsilat', '👤 Engin Tahsilatı']]
+    : [['kasa', '💰 Operasyonel Kasa'], ['mlift', '🏢 Marmara Lift'], ['engin_harcama', '👤 Engin Harcaması']]
+
+  const [defter, setDefter] = useState(secenekler[0][0])
+  const [tarih, setTarih] = useState(today())
+  const [ad, setAd] = useState('')
+  const [tutar, setTutar] = useState(0)
+  const [kaydediliyor, setKaydediliyor] = useState(false)
+
+  async function kaydet() {
+    if (!ad.trim()) { alert('Açıklama girin!'); return }
+    if (!tutar) { alert('Tutar girin!'); return }
+    setKaydediliyor(true)
+
+    if (defter === 'kasa') {
+      await fetch('/api/kasa', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ tarih, ad, tutar, yon }),
+      })
+    } else if (defter === 'mlift') {
+      await fetch('/api/marmara-lift', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ tarih, ad, tutar, yon, kategori: 'DİĞER' }),
+      })
+    } else if (defter === 'engin_tahsilat') {
+      await fetch('/api/engin/tahsilatlar', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ tarih, ad, tutar }),
+      })
+    } else if (defter === 'engin_harcama') {
+      await fetch('/api/engin/harcamalar', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ tarih, ad, tutar }),
+      })
+    }
+
+    setKaydediliyor(false)
+    onSaved()
+    onClose()
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-box sm" onClick={e => e.stopPropagation()}>
+        <div className="modal-head">{yon === 'giris' ? '+ Giriş Ekle' : '+ Çıkış Ekle'}<button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button></div>
+        <div className="modal-body">
+          <div className="fr"><label>Hangi Deftere?</label>
+            <select value={defter} onChange={e => setDefter(e.target.value)}>
+              {secenekler.map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+            </select>
+          </div>
+          <div className="fg2">
+            <div className="fr"><label>Tarih</label><input type="date" value={tarih} onChange={e => setTarih(e.target.value)} /></div>
+            <div className="fr"><label>Tutar (₺) *</label><input type="number" value={tutar} onChange={e => setTutar(Number(e.target.value))} min="0" step="0.01" /></div>
+          </div>
+          <div className="fr"><label>Açıklama *</label><input type="text" value={ad} onChange={e => setAd(e.target.value)} placeholder="ör: Ofis kirtasiye alımı" /></div>
+        </div>
+        <div className="modal-foot">
+          <button className="btn" onClick={onClose}>İptal</button>
+          <button className="btn pr" onClick={kaydet} disabled={kaydediliyor}>{kaydediliyor ? 'Kaydediliyor...' : '💾 Kaydet'}</button>
         </div>
       </div>
     </div>

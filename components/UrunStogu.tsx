@@ -18,6 +18,7 @@ export default function UrunStogu() {
   const [cariler, setCariler] = useState<any[]>([])
   const [yukleniyor, setYukleniyor] = useState(true)
   const [sira, setSira] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
+  const [sira2, setSira2] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
 
   useEffect(() => {
     async function yukle() {
@@ -108,6 +109,72 @@ export default function UrunStogu() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      <StokHareketleri uretimler={uretimler} cariler={cariler} sira={sira2} setSira={setSira2} />
+    </div>
+  )
+}
+
+function StokHareketleri({ uretimler, cariler, sira, setSira }: { uretimler: any[]; cariler: any[]; sira: SiraState; setSira: (fn: (s: SiraState) => SiraState) => void }) {
+  // Giriş kayıtları: her üretimin kendisi
+  const girisler = uretimler.map((u: any) => ({
+    tarih: u.tarih, tip: 'Giriş', lot: u.lot, urun: u.urun,
+    cariAd: '—', bidon: (u.bidonlar || []).reduce((a: number, b: any) => a + (b.adet || 0), 0),
+    kg: u.toplam_kg, acik: 'Üretim girişi',
+  }))
+  // Çıkış kayıtları: cari hareketlerindeki satis/bedelsiz_ver, lotu olan
+  const cikislar = cariler.flatMap((c: any) =>
+    (c.hareketler || [])
+      .filter((h: any) => (h.tur === 'satis' || h.tur === 'bedelsiz_ver') && h.lot)
+      .map((h: any) => {
+        const u = uretimler.find((x: any) => x.lot === h.lot)
+        const topBidonU = u ? (u.bidonlar || []).reduce((a: number, b: any) => a + (b.adet || 0), 0) : 0
+        const kg = u && topBidonU > 0 ? (h.adet / topBidonU) * u.toplam_kg : 0
+        return {
+          tarih: h.tarih, tip: 'Çıkış', lot: h.lot, urun: u?.urun || '—',
+          cariAd: c.ad, bidon: h.adet, kg,
+          acik: h.tur === 'bedelsiz_ver' ? 'Bedelsiz' : (h.acik || 'Satış'),
+        }
+      })
+  )
+  const hareketler = siraliVeri([...girisler, ...cikislar], sira)
+
+  return (
+    <div className="card">
+      <div className="ch">📋 Stok Hareketleri</div>
+      <div className="tw">
+        <table>
+          <thead>
+            <tr>
+              <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tarih'))}>Tarih{siraIkon(sira,'tarih')}</th>
+              <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tip'))}>Tip{siraIkon(sira,'tip')}</th>
+              <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'lot'))}>Lot{siraIkon(sira,'lot')}</th>
+              <th>Cari/Müşteri</th>
+              <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'bidon'))}>Bidon{siraIkon(sira,'bidon')}</th>
+              <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'kg'))}>Kg{siraIkon(sira,'kg')}</th>
+              <th>Açıklama</th>
+            </tr>
+          </thead>
+          <tbody>
+            {hareketler.length === 0 && (
+              <tr><td colSpan={7} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Hareket yok</td></tr>
+            )}
+            {hareketler.map((h, i) => (
+              <tr key={i}>
+                <td className="tnw">{fmtTarih(h.tarih)}</td>
+                <td><span className={`badge ${h.tip === 'Giriş' ? 'bG' : 'bR'}`}>{h.tip}</span></td>
+                <td style={{ fontWeight: 600, color: 'var(--b)' }}>{h.lot}</td>
+                <td>{h.cariAd}</td>
+                <td className="tr" style={{ fontWeight: 600, color: h.tip === 'Giriş' ? 'var(--g)' : 'var(--r)' }}>
+                  {h.tip === 'Giriş' ? '+' : '-'}{h.bidon}
+                </td>
+                <td className="tr">{fmt(h.kg)} kg</td>
+                <td style={{ fontSize: 11, color: 'var(--tx2)' }}>{h.acik}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )
