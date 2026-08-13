@@ -46,18 +46,32 @@ export default function UrunStogu() {
     return toplam
   }
 
-  // Her lot için stok durumu
+  // Her lot için stok durumu (manuel düzeltme dahil — geçmiş kayıtlarda
+  // lot etiketi olmadığı için satış otomatik düşülemiyordu; bu alanla
+  // farkı elle kapatabilirsiniz)
   const stoklar = uretimler.map(u => {
     const topBidon = (u.bidonlar || []).reduce((a: number, b: any) => a + (b.adet || 0), 0)
     const satilan = satılanBidon(u.lot)
-    const kalan = topBidon - satilan
-    return { ...u, topBidon, satilan, kalan }
+    const manuelDusum = u.manuel_dusum || 0
+    const kalan = topBidon - satilan - manuelDusum
+    return { ...u, topBidon, satilan, manuelDusum, kalan }
   })
   const stoklarSirali = siraliVeri(stoklar, sira)
 
   const topUretilen = stoklar.reduce((a, s) => a + s.topBidon, 0)
-  const topSatilan = stoklar.reduce((a, s) => a + s.satilan, 0)
+  const topSatilan = stoklar.reduce((a, s) => a + s.satilan + s.manuelDusum, 0)
   const topKalan = stoklar.reduce((a, s) => a + s.kalan, 0)
+
+  const [duzeltModal, setDuzeltModal] = useState<{ open: boolean; uretim: any | null }>({ open: false, uretim: null })
+
+  async function duzeltmeyiKaydet(uretimId: number, deger: number) {
+    await fetch(`/api/uretim/${uretimId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ manuel_dusum: deger }),
+    })
+    const res = await fetch('/api/uretim', { credentials: 'include' })
+    if (res.ok) setUretimler(await res.json())
+  }
 
   return (
     <div>
@@ -79,12 +93,13 @@ export default function UrunStogu() {
                 <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tarih'))}>Tarih{siraIkon(sira,'tarih')}</th>
                 <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'topBidon'))}>Üretilen{siraIkon(sira,'topBidon')}</th>
                 <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'satilan'))}>Satılan{siraIkon(sira,'satilan')}</th>
+                <th className="tr">Manuel Düzeltme</th>
                 <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'kalan'))}>Kalan{siraIkon(sira,'kalan')}</th>
-                <th>Bidon Dağılımı</th><th>Durum</th>
+                <th>Bidon Dağılımı</th><th>Durum</th><th></th>
               </tr>
             </thead>
             <tbody>
-              {yukleniyor && <tr><td colSpan={8} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
+              {yukleniyor && <tr><td colSpan={9} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
               {stoklarSirali.map(s => {
                 const durum = s.kalan <= 0 ? { yazi: 'Tükendi', renk: 'var(--r)', bg: 'var(--rbg)' }
                   : s.kalan < 10 ? { yazi: 'Az Kaldı', renk: 'var(--a)', bg: 'var(--abg)' }
@@ -97,14 +112,18 @@ export default function UrunStogu() {
                     <td className="tnw">{fmtTarih(s.tarih)}</td>
                     <td className="tr">{s.topBidon}</td>
                     <td className="tr" style={{ color: 'var(--r)' }}>{s.satilan}</td>
+                    <td className="tr">
+                      {s.manuelDusum > 0 ? <span style={{ color: 'var(--a)', fontWeight: 600 }}>-{s.manuelDusum}</span> : '—'}
+                    </td>
                     <td className="tr" style={{ fontWeight: 700, color: durum.renk }}>{s.kalan}</td>
                     <td style={{ fontSize: 11, color: 'var(--tx2)' }}>{bidonDetay || '—'}</td>
                     <td><span className="badge" style={{ background: durum.bg, color: durum.renk }}>{durum.yazi}</span></td>
+                    <td><button className="btn xs te" onClick={() => setDuzeltModal({ open: true, uretim: s })}>✏️</button></td>
                   </tr>
                 )
               })}
               {!yukleniyor && !uretimler.length && (
-                <tr><td colSpan={8} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Üretim kaydı yok</td></tr>
+                <tr><td colSpan={9} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Üretim kaydı yok</td></tr>
               )}
             </tbody>
           </table>
@@ -112,6 +131,51 @@ export default function UrunStogu() {
       </div>
 
       <StokHareketleri uretimler={uretimler} cariler={cariler} sira={sira2} setSira={setSira2} />
+
+      {duzeltModal.open && duzeltModal.uretim && (
+        <DuzeltmeModal
+          uretim={duzeltModal.uretim}
+          onClose={() => setDuzeltModal({ open: false, uretim: null })}
+          onKaydet={duzeltmeyiKaydet}
+        />
+      )}
+    </div>
+  )
+}
+
+function DuzeltmeModal({ uretim, onClose, onKaydet }: { uretim: any; onClose: () => void; onKaydet: (id: number, deger: number) => Promise<void> }) {
+  const [deger, setDeger] = useState(uretim.manuelDusum || 0)
+  const [kaydediliyor, setKaydediliyor] = useState(false)
+  const yeniKalan = uretim.topBidon - uretim.satilan - deger
+
+  async function kaydet() {
+    setKaydediliyor(true)
+    await onKaydet(uretim.id, deger)
+    setKaydediliyor(false)
+    onClose()
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-box sm" onClick={e => e.stopPropagation()}>
+        <div className="modal-head">✏️ Manuel Stok Düzeltmesi — {uretim.lot}<button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button></div>
+        <div className="modal-body">
+          <div className="finfo" style={{ marginBottom: 10 }}>
+            Bu, geçmişte lot etiketi olmadan girilmiş satışlar/düzeltmeler için ekstra bir düşüm miktarıdır.
+            Otomatik hesaplanan Satılan (<b>{uretim.satilan}</b>) rakamına eklenir.
+          </div>
+          <div className="fr"><label>Manuel Düşülecek Bidon</label>
+            <input type="number" value={deger} onChange={e => setDeger(Number(e.target.value))} min="0" />
+          </div>
+          <div className="finfo" style={{ marginTop: 10 }}>
+            Üretilen: {uretim.topBidon} − Satılan: {uretim.satilan} − Manuel: {deger} = <b>Yeni Kalan: {yeniKalan}</b>
+          </div>
+        </div>
+        <div className="modal-foot">
+          <button className="btn" onClick={onClose}>İptal</button>
+          <button className="btn pr" onClick={kaydet} disabled={kaydediliyor}>{kaydediliyor ? 'Kaydediliyor...' : '💾 Kaydet'}</button>
+        </div>
+      </div>
     </div>
   )
 }

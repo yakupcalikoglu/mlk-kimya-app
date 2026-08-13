@@ -105,7 +105,7 @@ export default function OzetDashboard({ onCariSec }: { onCariSec?: (id: string) 
   const urunStoklari = uretimler.map((u: any) => {
     const topBidonU = (u.bidonlar || []).reduce((a: number, b: any) => a + (b.adet || 0), 0)
     const satilan = satılanBidon(u.lot)
-    const kalanBidon = Math.max(0, topBidonU - satilan)
+    const kalanBidon = Math.max(0, topBidonU - satilan - (u.manuel_dusum || 0))
     const kalanKg = topBidonU > 0 ? (kalanBidon / topBidonU) * (u.toplam_kg || 0) : 0
     return { kalanBidon, kalanKg }
   })
