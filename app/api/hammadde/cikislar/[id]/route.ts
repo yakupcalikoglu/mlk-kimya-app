@@ -26,3 +26,14 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   if (kayit?.hammadde_id) await yenidenHesapla(kayit.hammadde_id)
   return NextResponse.json({ ok: true })
 }
+
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+  const s = req.cookies.get('mlk_session'); if (!s) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
+  let u: any = null; try { u = JSON.parse(s.value) } catch {}
+  if (!u || u.role === 'goruntule') return NextResponse.json({ error: 'Yetkisiz — görüntüleme yetkisiyle silme/düzenleme yapılamaz' }, { status: 403 })
+  const body = await req.json()
+  const { data, error } = await supabase.from('mlk_hammadde_cikislar').update(body).eq('id', params.id).select().single()
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (data?.hammadde_id) await yenidenHesapla(data.hammadde_id)
+  return NextResponse.json(data)
+}
