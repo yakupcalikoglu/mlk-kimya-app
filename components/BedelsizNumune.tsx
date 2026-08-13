@@ -19,6 +19,7 @@ function today() { return new Date().toISOString().split('T')[0] }
 
 export default function BedelsizNumune() {
   const [cariler, setCariler] = useState<any[]>([])
+  const [uretimler, setUretimler] = useState<any[]>([])
   const [yukleniyor, setYukleniyor] = useState(true)
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState<any>({ tarih: today(), borcaDus: true })
@@ -26,9 +27,26 @@ export default function BedelsizNumune() {
   const [sira, setSira] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
 
   async function yukle() {
-    const res = await fetch('/api/cariler', { credentials: 'include' })
-    if (res.ok) setCariler(await res.json())
+    const [cRes, uRes] = await Promise.all([
+      fetch('/api/cariler', { credentials: 'include' }),
+      fetch('/api/uretim', { credentials: 'include' }),
+    ])
+    if (cRes.ok) setCariler(await cRes.json())
+    if (uRes.ok) setUretimler(await uRes.json())
     setYukleniyor(false)
+  }
+
+  function lotKalan(lot: string) {
+    const u = uretimler.find((x: any) => x.lot === lot)
+    if (!u) return 0
+    const topBidonU = (u.bidonlar || []).reduce((a: number, b: any) => a + (b.adet || 0), 0)
+    let satilan = 0
+    cariler.forEach((c: any) => {
+      (c.hareketler || []).forEach((h: any) => {
+        if ((h.tur === 'satis' || h.tur === 'bedelsiz_ver') && h.lot === lot) satilan += h.adet || 0
+      })
+    })
+    return Math.max(0, topBidonU - satilan)
   }
 
   useEffect(() => { yukle() }, [])
@@ -69,7 +87,8 @@ export default function BedelsizNumune() {
       acik: form.acik || 'Bedelsiz numune',
       bedBorcDus: form.borcaDus,
       bedBorcYaz: false,
-      bedStoktan: true
+      bedStoktan: true,
+      lot: form.lot || null,
     })
 
     await fetch(`/api/cariler/${form.cariId}`, {
@@ -190,6 +209,14 @@ export default function BedelsizNumune() {
                 <div className="fr"><label>Fatura No</label>
                   <input type="text" value={form.fatno || ''} onChange={e => setForm({ ...form, fatno: e.target.value })} />
                 </div>
+              </div>
+              <div className="fr"><label>Lot (opsiyonel — ürün stoğundan düşmek için)</label>
+                <select value={form.lot || ''} onChange={e => setForm({ ...form, lot: e.target.value })}>
+                  <option value="">— Lot belirtilmedi —</option>
+                  {uretimler.map((u: any) => (
+                    <option key={u.lot} value={u.lot}>{u.lot} — {u.urun} (Kalan: {lotKalan(u.lot)} bidon)</option>
+                  ))}
+                </select>
               </div>
               <div className="fg2">
                 <div className="fr"><label>Adet (Bidon) *</label>
