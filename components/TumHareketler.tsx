@@ -73,7 +73,10 @@ export default function TumHareketler({ onCariSec }: { onCariSec?: (id: string) 
       ? (h.yon === 'giris' ? 'Kasa Giriş' : 'Kasa Çıkış')
       : (h.tur === 'satis' ? 'Satış' : h.tur === 'tahsilat' ? 'Tahsilat' : h.tur)
     const _kaynakAd = isKasa ? 'Kasa' : (h.cariAd || '')
-    return { ...h, _tutar: _tutar || 0, _tur, _kaynakAd }
+    // Genel Giriş/Çıkış yönü: kasa girişi veya cari tahsilatı = Giriş (para bize geldi);
+    // kasa çıkışı veya cari satışı (borç doğuran) = Çıkış (para gitti/borç arttı)
+    const _yon = isKasa ? h.yon : (h.tur === 'tahsilat' ? 'giris' : 'cikis')
+    return { ...h, _tutar: _tutar || 0, _tur, _kaynakAd, _yon }
   })
   const gosterilen = siraliVeri(gosterilenZengin, sira)
 
@@ -142,13 +145,14 @@ export default function TumHareketler({ onCariSec }: { onCariSec?: (id: string) 
               <tr>
                 <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tarih'))}>Tarih{siraIkon(sira,'tarih')}</th>
                 <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'_kaynakAd'))}>Kaynak{siraIkon(sira,'_kaynakAd')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'_yon'))}>Yön{siraIkon(sira,'_yon')}</th>
                 <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'_tur'))}>Tür{siraIkon(sira,'_tur')}</th>
                 <th>Açıklama</th>
                 <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'_tutar'))}>Tutar{siraIkon(sira,'_tutar')}</th>
               </tr>
             </thead>
             <tbody>
-              {yukleniyor && <tr><td colSpan={5} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
+              {yukleniyor && <tr><td colSpan={6} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
               {gosterilen.map((h, i) => {
                 const isKasa = h.kaynak === 'kasa'
                 const tutar = h._tutar
@@ -168,6 +172,9 @@ export default function TumHareketler({ onCariSec }: { onCariSec?: (id: string) 
                       }
                     </td>
                     <td>
+                      <span className={`badge ${h._yon === 'giris' ? 'bG' : 'bR'}`}>{h._yon === 'giris' ? '↓ Giriş' : '↑ Çıkış'}</span>
+                    </td>
+                    <td>
                       <span className={`badge ${pozitif ? 'bG' : 'bR'}`}>{tur}</span>
                     </td>
                     <td style={{ fontSize: 11, color: 'var(--tx2)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -180,7 +187,7 @@ export default function TumHareketler({ onCariSec }: { onCariSec?: (id: string) 
                 )
               })}
               {!yukleniyor && !gosterilen.length && (
-                <tr><td colSpan={5} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Hareket yok</td></tr>
+                <tr><td colSpan={6} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Hareket yok</td></tr>
               )}
             </tbody>
           </table>
