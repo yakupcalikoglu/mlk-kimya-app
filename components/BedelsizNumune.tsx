@@ -26,6 +26,7 @@ export default function BedelsizNumune() {
   const [uretimler, setUretimler] = useState<any[]>([])
   const [yukleniyor, setYukleniyor] = useState(true)
   const [modal, setModal] = useState(false)
+  const [duzenlenen, setDuzenlenen] = useState<any>(null)
   const [form, setForm] = useState<any>({ tarih: today(), borcaDus: true })
   const [kaydediliyor, setKaydediliyor] = useState(false)
   const [sira, setSira] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
@@ -72,40 +73,69 @@ export default function BedelsizNumune() {
     setKaydediliyor(true)
 
     const c = cariler.find(x => x.id === form.cariId)
-    const hareketler = [...(c?.hareketler || [])]
-    const oncekiBak = hareketler.length ? hareketler[hareketler.length-1].bakiye : 0
     const adet = parseInt(form.adet)
     const birimFiyat = parseFloat(form.birimFiyat)
     const tutar = adet * birimFiyat
-    const yeniBak = form.borcaDus ? oncekiBak - tutar : oncekiBak
 
-    hareketler.push({
-      id: Date.now(),
-      tarih: form.tarih || today(),
-      tur: 'bedelsiz_ver',
-      adet, birim: birimFiyat,
-      fatno: form.fatno || '',
-      tutar: 0,
-      tahsilat: form.borcaDus ? tutar : 0,
-      bakiye: yeniBak,
-      acik: form.acik || 'Bedelsiz numune',
-      bedBorcDus: form.borcaDus,
-      bedBorcYaz: false,
-      bedStoktan: true,
-      lot: form.lot || null,
-    })
-
-    await fetch(`/api/cariler/${form.cariId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ hareketler })
-    })
+    if (duzenlenen) {
+      // Düzenleme: eski kaydı çıkar, güncellenmiş haliyle tekrar ekle, bakiye zincirini yeniden hesapla
+      let hareketler = (c?.hareketler || []).filter((h: any) => h.id !== duzenlenen.id)
+      hareketler.push({
+        ...duzenlenen,
+        tarih: form.tarih || today(),
+        adet, birim: birimFiyat,
+        fatno: form.fatno || '',
+        tutar: 0,
+        tahsilat: form.borcaDus ? tutar : 0,
+        acik: form.acik || 'Bedelsiz numune',
+        bedBorcDus: form.borcaDus,
+        lot: form.lot || null,
+      })
+      let bak = 0
+      hareketler = hareketler.map((h: any) => {
+        bak += (h.tutar || 0) - (h.tahsilat || 0)
+        return { ...h, bakiye: bak }
+      })
+      await fetch(`/api/cariler/${form.cariId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ hareketler })
+      })
+    } else {
+      const hareketler = [...(c?.hareketler || [])]
+      const oncekiBak = hareketler.length ? hareketler[hareketler.length-1].bakiye : 0
+      const yeniBak = form.borcaDus ? oncekiBak - tutar : oncekiBak
+      hareketler.push({
+        id: Date.now(),
+        tarih: form.tarih || today(),
+        tur: 'bedelsiz_ver',
+        adet, birim: birimFiyat,
+        fatno: form.fatno || '',
+        tutar: 0,
+        tahsilat: form.borcaDus ? tutar : 0,
+        bakiye: yeniBak,
+        acik: form.acik || 'Bedelsiz numune',
+        bedBorcDus: form.borcaDus,
+        bedBorcYaz: false,
+        bedStoktan: true,
+        lot: form.lot || null,
+      })
+      await fetch(`/api/cariler/${form.cariId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ hareketler })
+      })
+    }
 
     await yukle()
     setModal(false)
+    setDuzenlenen(null)
     setForm({ tarih: today(), borcaDus: true })
     setKaydediliyor(false)
+  }
+
+  function duzenleAc(b: any) {
+    setDuzenlenen(b)
+    setForm({ cariId: b.cariId, tarih: b.tarih, fatno: b.fatno, adet: b.adet, birimFiyat: b.birim, acik: b.acik, borcaDus: b.bedBorcDus, lot: b.lot })
+    setModal(true)
   }
 
   async function bedelsizSil(cariId: string, harId: number) {
@@ -149,7 +179,7 @@ export default function BedelsizNumune() {
       <div className="card">
         <div className="ch">🎁 Bedelsiz Numune Kayıtları
           <div className="ch-actions">
-            <button className="btn xs pr" onClick={() => { setForm({ tarih: today(), borcaDus: true }); setModal(true) }}>
+            <button className="btn xs pr" onClick={() => { setDuzenlenen(null); setForm({ tarih: today(), borcaDus: true }); setModal(true) }}>
               + Bedelsiz Ekle
             </button>
           </div>
@@ -181,7 +211,10 @@ export default function BedelsizNumune() {
                     </span>
                   </td>
                   <td style={{ fontSize: 11, color: 'var(--tx2)' }}>{b.acik || '—'}</td>
-                  <td><IslemlerMenu><IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => bedelsizSil(b.cariId, b.id)}>Sil</IslemlerMenu.Item></IslemlerMenu></td>
+                  <td><IslemlerMenu>
+                    <IslemlerMenu.Item ikon="✏️" onClick={() => duzenleAc(b)}>Düzenle</IslemlerMenu.Item>
+                    <IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => bedelsizSil(b.cariId, b.id)}>Sil</IslemlerMenu.Item>
+                  </IslemlerMenu></td>
                 </tr>
               ))}
               {!yukleniyor && !bedelsizler.length && (
@@ -193,11 +226,11 @@ export default function BedelsizNumune() {
       </div>
 
       {modal && (
-        <div className="modal-overlay" {...overlayProps(() => setModal(false))}>
+        <div className="modal-overlay" {...overlayProps(() => { setModal(false); setDuzenlenen(null) })}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
             <div className="modal-head">
-              🎁 Bedelsiz Numune Ekle
-              <button onClick={() => setModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button>
+              {duzenlenen ? '✏️ Bedelsiz Kaydı Düzenle' : '🎁 Bedelsiz Numune Ekle'}
+              <button onClick={() => { setModal(false); setDuzenlenen(null) }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button>
             </div>
             <div className="modal-body">
               <div className="fr"><label>Cari *</label>
@@ -247,7 +280,7 @@ export default function BedelsizNumune() {
               </div>
             </div>
             <div className="modal-foot">
-              <button className="btn" onClick={() => setModal(false)}>İptal</button>
+              <button className="btn" onClick={() => { setModal(false); setDuzenlenen(null) }}>İptal</button>
               <button className="btn pr" onClick={bedelsizEkle} disabled={kaydediliyor}>
                 {kaydediliyor ? 'Kaydediliyor...' : '💾 Kaydet'}
               </button>

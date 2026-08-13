@@ -24,6 +24,7 @@ export default function EnginHesabi() {
   const [tahsilatlar, setTahsilatlar] = useState<any[]>([])
   const [yukleniyor, setYukleniyor] = useState(true)
   const [modal, setModal] = useState<'harcama'|'tahsilat'|null>(null)
+  const [duzenlenen, setDuzenlenen] = useState<{ id: string; tip: 'harcama'|'tahsilat' } | null>(null)
   const [form, setForm] = useState<any>({ tarih: today() })
   const [kaydediliyor, setKaydediliyor] = useState(false)
   const [sira, setSira] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
@@ -48,16 +49,29 @@ export default function EnginHesabi() {
     if (!form.tutar || !form.ad) { alert('Tutar ve açıklama girin!'); return }
     setKaydediliyor(true)
     const endpoint = modal === 'harcama' ? '/api/engin/harcamalar' : '/api/engin/tahsilatlar'
-    await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ tarih: form.tarih, ad: form.ad, tutar: parseFloat(form.tutar) })
-    })
+    const payload = { tarih: form.tarih, ad: form.ad, tutar: parseFloat(form.tutar) }
+    if (duzenlenen) {
+      await fetch(`${endpoint}/${duzenlenen.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify(payload)
+      })
+    } else {
+      await fetch(endpoint, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify(payload)
+      })
+    }
     await yukle()
     setModal(null)
+    setDuzenlenen(null)
     setForm({ tarih: today() })
     setKaydediliyor(false)
+  }
+
+  function duzenleAc(h: any) {
+    setDuzenlenen({ id: h.id, tip: h.tip })
+    setForm({ tarih: h.tarih, ad: h.ad, tutar: h.tutar })
+    setModal(h.tip)
   }
 
   async function sil(id: string, tip: 'harcama'|'tahsilat') {
@@ -87,8 +101,8 @@ export default function EnginHesabi() {
       <div className="card">
         <div className="ch">👤 Engin Hesabı
           <div className="ch-actions">
-            <button className="btn xs dn" onClick={() => { setModal('harcama'); setForm({ tarih: today() }) }}>+ Harcama</button>
-            <button className="btn xs gn" onClick={() => { setModal('tahsilat'); setForm({ tarih: today() }) }}>+ Tahsilat</button>
+            <button className="btn xs dn" onClick={() => { setDuzenlenen(null); setModal('harcama'); setForm({ tarih: today() }) }}>+ Harcama</button>
+            <button className="btn xs gn" onClick={() => { setDuzenlenen(null); setModal('tahsilat'); setForm({ tarih: today() }) }}>+ Tahsilat</button>
           </div>
         </div>
         <div className="tw">
@@ -110,7 +124,10 @@ export default function EnginHesabi() {
                   <td className="tr" style={{ fontWeight: 700, color: h.tip === 'tahsilat' ? 'var(--g)' : 'var(--r)' }}>
                     {h.tip === 'tahsilat' ? '+' : '-'}₺{fmt(h.tutar)}
                   </td>
-                  <td><IslemlerMenu><IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => sil(h.id, h.tip)}>Sil</IslemlerMenu.Item></IslemlerMenu></td>
+                  <td><IslemlerMenu>
+                    <IslemlerMenu.Item ikon="✏️" onClick={() => duzenleAc(h)}>Düzenle</IslemlerMenu.Item>
+                    <IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => sil(h.id, h.tip)}>Sil</IslemlerMenu.Item>
+                  </IslemlerMenu></td>
                 </tr>
               ))}
               {!yukleniyor && !tumHarSirali.length && <tr><td colSpan={5} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Hareket yok</td></tr>}
@@ -120,11 +137,11 @@ export default function EnginHesabi() {
       </div>
 
       {modal && (
-        <div className="modal-overlay" {...overlayProps(() => setModal(null))}>
+        <div className="modal-overlay" {...overlayProps(() => { setModal(null); setDuzenlenen(null) })}>
           <div className="modal-box sm" onClick={e => e.stopPropagation()}>
             <div className="modal-head">
-              {modal === 'harcama' ? '+ Harcama Ekle' : '+ Tahsilat Ekle'}
-              <button onClick={() => setModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button>
+              {duzenlenen ? '✏️ Düzenle' : (modal === 'harcama' ? '+ Harcama Ekle' : '+ Tahsilat Ekle')}
+              <button onClick={() => { setModal(null); setDuzenlenen(null) }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button>
             </div>
             <div className="modal-body">
               <div className="fr"><label>Tarih</label>
@@ -138,7 +155,7 @@ export default function EnginHesabi() {
               </div>
             </div>
             <div className="modal-foot">
-              <button className="btn" onClick={() => setModal(null)}>İptal</button>
+              <button className="btn" onClick={() => { setModal(null); setDuzenlenen(null) }}>İptal</button>
               <button className={`btn ${modal === 'tahsilat' ? 'gn' : 'dn'}`} onClick={ekle} disabled={kaydediliyor}>
                 {kaydediliyor ? 'Kaydediliyor...' : '💾 Kaydet'}
               </button>

@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
 import SayiInput from '@/components/SayiInput'
+import IslemlerMenu from '@/components/IslemlerMenu'
+import { useAdminOnay } from '@/components/AdminOnaySistemi'
 import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
@@ -22,6 +24,7 @@ const TUR_ETIKET: Record<string, string> = {
 }
 
 export default function TumHareketler({ onCariSec }: { onCariSec?: (id: string) => void }) {
+  const confirmAdmin = useAdminOnay()
   const [cariler, setCariler] = useState<any[]>([])
   const [kasa, setKasa] = useState<any[]>([])
   const [ml, setMl] = useState<any[]>([])
@@ -108,6 +111,29 @@ export default function TumHareketler({ onCariSec }: { onCariSec?: (id: string) 
   })
   const gosterilen = siraliVeri(gosterilenZengin, sira)
 
+  async function sil(h: any) {
+    if (!(await confirmAdmin('Bu hareket silinsin mi?'))) return
+    if (h.kaynak === 'kasa') {
+      await fetch(`/api/kasa/${h.id}`, { method: 'DELETE', credentials: 'include' })
+    } else if (h.kaynak === 'mlift') {
+      await fetch(`/api/marmara-lift/${h.id}`, { method: 'DELETE', credentials: 'include' })
+    } else if (h.kaynak === 'engin') {
+      await fetch(`/api/engin/${h.tip === 'Harcama' ? 'harcamalar' : 'tahsilatlar'}/${h.id}`, { method: 'DELETE', credentials: 'include' })
+    } else if (h.kaynak === 'sermaye') {
+      await fetch(`/api/sermaye/${h.tip === 'Ödeme' ? 'odemeler' : 'iadeler'}/${h.id}`, { method: 'DELETE', credentials: 'include' })
+    } else if (h.kaynak === 'cari') {
+      const c = cariler.find(x => x.id === h.cariId)
+      let hareketler = (c?.hareketler || []).filter((x: any) => x.id !== h.id)
+      let bak = 0
+      hareketler = hareketler.map((x: any) => { bak += (x.tutar || 0) - (x.tahsilat || 0); return { ...x, bakiye: bak } })
+      await fetch(`/api/cariler/${h.cariId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ hareketler })
+      })
+    }
+    await yukle()
+  }
+
   const kasaGelir = kasaFiltre.filter(h => h.yon === 'giris').reduce((a, h) => a + (h.tutar || 0), 0)
   const kasaGider = kasaFiltre.filter(h => h.yon === 'cikis').reduce((a, h) => a + (h.tutar || 0), 0)
   const cariSatis = cariFiltre.filter(h => h.tur === 'satis').reduce((a, h) => a + (h.tutar || 0), 0)
@@ -181,10 +207,11 @@ export default function TumHareketler({ onCariSec }: { onCariSec?: (id: string) 
                 <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'_tur'))}>Tür{siraIkon(sira,'_tur')}</th>
                 <th>Açıklama</th>
                 <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'_tutar'))}>Tutar{siraIkon(sira,'_tutar')}</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
-              {yukleniyor && <tr><td colSpan={6} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
+              {yukleniyor && <tr><td colSpan={7} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
               {gosterilen.map((h, i) => {
                 const pozitif = h._yon === 'giris'
                 const acik = h.kaynak === 'cari' ? (h.acik || h.fatno || '—')
@@ -205,11 +232,12 @@ export default function TumHareketler({ onCariSec }: { onCariSec?: (id: string) 
                     <td className="tr" style={{ fontWeight: 700, color: pozitif ? 'var(--g)' : 'var(--r)' }}>
                       {pozitif ? '+' : '-'}₺{fmt(h._tutar || 0)}
                     </td>
+                    <td><IslemlerMenu><IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => sil(h)}>Sil</IslemlerMenu.Item></IslemlerMenu></td>
                   </tr>
                 )
               })}
               {!yukleniyor && !gosterilen.length && (
-                <tr><td colSpan={6} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Hareket yok</td></tr>
+                <tr><td colSpan={7} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Hareket yok</td></tr>
               )}
             </tbody>
           </table>

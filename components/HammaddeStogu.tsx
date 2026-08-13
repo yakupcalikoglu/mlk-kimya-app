@@ -35,8 +35,8 @@ export default function HammaddeStogu() {
   const [yukleniyor, setYukleniyor] = useState(true)
 
   const [tanimModal, setTanimModal] = useState(false)
-  const [alimModal, setAlimModal] = useState<{ open: boolean; hammaddeId: number | null }>({ open: false, hammaddeId: null })
-  const [cikisModal, setCikisModal] = useState<{ open: boolean; hammaddeId: number | null }>({ open: false, hammaddeId: null })
+  const [alimModal, setAlimModal] = useState<{ open: boolean; hammaddeId: number | null; data: Alim | null }>({ open: false, hammaddeId: null, data: null })
+  const [cikisModal, setCikisModal] = useState<{ open: boolean; hammaddeId: number | null; data: Cikis | null }>({ open: false, hammaddeId: null, data: null })
 
   async function yukle() {
     const [hRes, aRes, cRes] = await Promise.all([
@@ -82,9 +82,9 @@ export default function HammaddeStogu() {
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-        <button className="btn xs pr" onClick={() => setAlimModal({ open: true, hammaddeId: hammaddeler[0]?.id || null })}>+ Hammadde Alımı</button>
+        <button className="btn xs pr" onClick={() => setAlimModal({ open: true, hammaddeId: hammaddeler[0]?.id || null, data: null })}>+ Hammadde Alımı</button>
         <button className="btn xs" onClick={() => setTanimModal(true)}>+ Yeni Hammadde Tanımla</button>
-        <button className="btn xs" onClick={() => setCikisModal({ open: true, hammaddeId: hammaddeler[0]?.id || null })}>+ Manuel Çıkış</button>
+        <button className="btn xs" onClick={() => setCikisModal({ open: true, hammaddeId: hammaddeler[0]?.id || null, data: null })}>+ Manuel Çıkış</button>
       </div>
 
       {yukleniyor && <div style={{ textAlign: 'center', padding: 30, color: 'var(--tx2)' }}>Yükleniyor...</div>}
@@ -139,7 +139,10 @@ export default function HammaddeStogu() {
                         <td>{a.odeme || '—'}</td>
                         <td>{a.fat_no || '—'}</td>
                         <td>{a.not_metin || '—'}</td>
-                        <td><IslemlerMenu><IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => alimSil(a.id)}>Sil</IslemlerMenu.Item></IslemlerMenu></td>
+                        <td><IslemlerMenu>
+                          <IslemlerMenu.Item ikon="✏️" onClick={() => setAlimModal({ open: true, hammaddeId: h.id, data: a })}>Düzenle</IslemlerMenu.Item>
+                          <IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => alimSil(a.id)}>Sil</IslemlerMenu.Item>
+                        </IslemlerMenu></td>
                       </tr>
                     ))}
                   </tbody>
@@ -160,7 +163,10 @@ export default function HammaddeStogu() {
                         <td className="tr" style={{ color: 'var(--r)', fontWeight: 600 }}>{fmt(c.miktar)} {h.birim}</td>
                         <td>{c.neden ? <span className="badge bB">{c.neden}</span> : '—'}</td>
                         <td>{c.not_metin || '—'}</td>
-                        <td><IslemlerMenu><IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => cikisSil(c.id)}>Sil</IslemlerMenu.Item></IslemlerMenu></td>
+                        <td><IslemlerMenu>
+                          <IslemlerMenu.Item ikon="✏️" onClick={() => setCikisModal({ open: true, hammaddeId: h.id, data: c })}>Düzenle</IslemlerMenu.Item>
+                          <IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => cikisSil(c.id)}>Sil</IslemlerMenu.Item>
+                        </IslemlerMenu></td>
                       </tr>
                     ))}
                   </tbody>
@@ -176,7 +182,8 @@ export default function HammaddeStogu() {
         <AlimModal
           hammaddeler={hammaddeler}
           hammaddeId={alimModal.hammaddeId}
-          onClose={() => setAlimModal({ open: false, hammaddeId: null })}
+          data={alimModal.data}
+          onClose={() => setAlimModal({ open: false, hammaddeId: null, data: null })}
           onSaved={yukle}
         />
       )}
@@ -184,7 +191,8 @@ export default function HammaddeStogu() {
         <CikisModal
           hammaddeler={hammaddeler}
           hammaddeId={cikisModal.hammaddeId}
-          onClose={() => setCikisModal({ open: false, hammaddeId: null })}
+          data={cikisModal.data}
+          onClose={() => setCikisModal({ open: false, hammaddeId: null, data: null })}
           onSaved={yukle}
         />
       )}
@@ -232,19 +240,19 @@ function TanimModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
 }
 
 // ─── Hammadde Alımı ─────────────────────────────────────
-function AlimModal({ hammaddeler, hammaddeId, onClose, onSaved }: {
-  hammaddeler: Hammadde[]; hammaddeId: number | null; onClose: () => void; onSaved: () => void
+function AlimModal({ hammaddeler, hammaddeId, data, onClose, onSaved }: {
+  hammaddeler: Hammadde[]; hammaddeId: number | null; data?: Alim | null; onClose: () => void; onSaved: () => void
 }) {
-  const [hId, setHId] = useState(hammaddeId || 0)
-  const [tarih, setTarih] = useState(today())
-  const [tedarikci, setTedarikci] = useState('')
-  const [miktar, setMiktar] = useState(0)
-  const [birimFiyat, setBirimFiyat] = useState(0)
-  const [kkMaliyet, setKkMaliyet] = useState(0)
-  const [vade, setVade] = useState('')
-  const [odeme, setOdeme] = useState('Havale/EFT')
-  const [fatNo, setFatNo] = useState('')
-  const [not, setNot] = useState('')
+  const [hId, setHId] = useState(data?.hammadde_id || hammaddeId || 0)
+  const [tarih, setTarih] = useState(data?.tarih || today())
+  const [tedarikci, setTedarikci] = useState(data?.tedarikci || '')
+  const [miktar, setMiktar] = useState(data?.miktar || 0)
+  const [birimFiyat, setBirimFiyat] = useState(data?.birim_fiyat || 0)
+  const [kkMaliyet, setKkMaliyet] = useState(data?.kk_maliyet || 0)
+  const [vade, setVade] = useState(data?.vade || '')
+  const [odeme, setOdeme] = useState(data?.odeme || 'Havale/EFT')
+  const [fatNo, setFatNo] = useState(data?.fat_no || '')
+  const [not, setNot] = useState(data?.not_metin || '')
   const [kaydediliyor, setKaydediliyor] = useState(false)
 
   const tutar = miktar * birimFiyat
@@ -253,13 +261,21 @@ function AlimModal({ hammaddeler, hammaddeId, onClose, onSaved }: {
     if (!hId) { alert('Hammadde seçin!'); return }
     if (!miktar) { alert('Miktar girin!'); return }
     setKaydediliyor(true)
-    await fetch('/api/hammadde/alimlar', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-      body: JSON.stringify({
-        hammadde_id: hId, tarih, tedarikci, miktar, birim_fiyat: birimFiyat, tutar,
-        kk_maliyet: kkMaliyet, vade, odeme, fat_no: fatNo, not_metin: not,
-      }),
-    })
+    const payload = {
+      hammadde_id: hId, tarih, tedarikci, miktar, birim_fiyat: birimFiyat, tutar,
+      kk_maliyet: kkMaliyet, vade, odeme, fat_no: fatNo, not_metin: not,
+    }
+    if (data) {
+      await fetch(`/api/hammadde/alimlar/${data.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify(payload),
+      })
+    } else {
+      await fetch('/api/hammadde/alimlar', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify(payload),
+      })
+    }
     setKaydediliyor(false)
     onSaved()
     onClose()
@@ -268,7 +284,7 @@ function AlimModal({ hammaddeler, hammaddeId, onClose, onSaved }: {
   return (
     <div className="modal-overlay" {...overlayProps(onClose)}>
       <div className="modal-box" onClick={e => e.stopPropagation()}>
-        <div className="modal-head">+ Hammadde Alımı<button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button></div>
+        <div className="modal-head">{data ? '✏️ Alım Düzenle' : '+ Hammadde Alımı'}<button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button></div>
         <div className="modal-body">
           <div className="fg2">
             <div className="fr"><label>Hammadde *</label>
@@ -309,24 +325,32 @@ function AlimModal({ hammaddeler, hammaddeId, onClose, onSaved }: {
 }
 
 // ─── Manuel Çıkış ────────────────────────────────────────
-function CikisModal({ hammaddeler, hammaddeId, onClose, onSaved }: {
-  hammaddeler: Hammadde[]; hammaddeId: number | null; onClose: () => void; onSaved: () => void
+function CikisModal({ hammaddeler, hammaddeId, data, onClose, onSaved }: {
+  hammaddeler: Hammadde[]; hammaddeId: number | null; data?: Cikis | null; onClose: () => void; onSaved: () => void
 }) {
-  const [hId, setHId] = useState(hammaddeId || 0)
-  const [tarih, setTarih] = useState(today())
-  const [miktar, setMiktar] = useState(0)
-  const [neden, setNeden] = useState('')
-  const [not, setNot] = useState('')
+  const [hId, setHId] = useState(data?.hammadde_id || hammaddeId || 0)
+  const [tarih, setTarih] = useState(data?.tarih || today())
+  const [miktar, setMiktar] = useState(data?.miktar || 0)
+  const [neden, setNeden] = useState(data?.neden || '')
+  const [not, setNot] = useState(data?.not_metin || '')
   const [kaydediliyor, setKaydediliyor] = useState(false)
 
   async function kaydet() {
     if (!hId) { alert('Hammadde seçin!'); return }
     if (!miktar) { alert('Miktar girin!'); return }
     setKaydediliyor(true)
-    await fetch('/api/hammadde/cikislar', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-      body: JSON.stringify({ hammadde_id: hId, tarih, miktar, neden, not_metin: not }),
-    })
+    const payload = { hammadde_id: hId, tarih, miktar, neden, not_metin: not }
+    if (data) {
+      await fetch(`/api/hammadde/cikislar/${data.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify(payload),
+      })
+    } else {
+      await fetch('/api/hammadde/cikislar', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify(payload),
+      })
+    }
     setKaydediliyor(false)
     onSaved()
     onClose()
@@ -335,7 +359,7 @@ function CikisModal({ hammaddeler, hammaddeId, onClose, onSaved }: {
   return (
     <div className="modal-overlay" {...overlayProps(onClose)}>
       <div className="modal-box sm" onClick={e => e.stopPropagation()}>
-        <div className="modal-head">+ Manuel Çıkış<button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button></div>
+        <div className="modal-head">{data ? '✏️ Çıkış Düzenle' : '+ Manuel Çıkış'}<button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button></div>
         <div className="modal-body">
           <div className="fr"><label>Hammadde *</label>
             <select value={hId} onChange={e => setHId(Number(e.target.value))}>

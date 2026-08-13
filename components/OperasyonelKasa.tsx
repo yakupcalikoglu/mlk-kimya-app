@@ -24,6 +24,7 @@ export default function OperasyonelKasa() {
   const [cariler, setCariler] = useState<any[]>([])
   const [yukleniyor, setYukleniyor] = useState(true)
   const [modal, setModal] = useState<'tahsilat'|'odeme'|null>(null)
+  const [duzenlenenId, setDuzenlenenId] = useState<string|null>(null)
   const [form, setForm] = useState<any>({})
   const [kaydediliyor, setKaydediliyor] = useState(false)
   const [sira, setSira] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
@@ -50,11 +51,25 @@ export default function OperasyonelKasa() {
     if (!tutar) { alert('Tutar girin!'); setKaydediliyor(false); return }
 
     const payload: any = {
-      yon: modal === 'tahsilat' ? 'giris' : 'cikis',
+      yon: duzenlenenId ? form.yon : (modal === 'tahsilat' ? 'giris' : 'cikis'),
       tarih: form.tarih || today(),
       ad: form.ad || (modal === 'tahsilat' ? 'Tahsilat' : 'Ödeme'),
       tutar,
       cari_ref: form.cariRef || null
+    }
+
+    if (duzenlenenId) {
+      await fetch(`/api/kasa/${duzenlenenId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      await yukle()
+      setModal(null)
+      setDuzenlenenId(null)
+      setForm({})
+      setKaydediliyor(false)
+      return
     }
 
     // Cariye yansıt
@@ -85,8 +100,15 @@ export default function OperasyonelKasa() {
 
     await yukle()
     setModal(null)
+    setDuzenlenenId(null)
     setForm({})
     setKaydediliyor(false)
+  }
+
+  function duzenleAc(h: any) {
+    setDuzenlenenId(h.id)
+    setForm({ tarih: h.tarih, ad: h.ad, tutar: h.tutar, cariRef: h.cari_ref, yon: h.yon })
+    setModal(h.yon === 'giris' ? 'tahsilat' : 'odeme')
   }
 
   async function sil(id: string) {
@@ -130,8 +152,8 @@ export default function OperasyonelKasa() {
       <div className="card">
         <div className="ch">💰 Kasa Hareketleri
           <div className="ch-actions">
-            <button className="btn xs gn" onClick={() => { setModal('tahsilat'); setForm({tarih:today()}) }}>📥 Tahsilat Al</button>
-            <button className="btn xs dn" onClick={() => { setModal('odeme'); setForm({tarih:today()}) }}>📤 Ödeme Yap</button>
+            <button className="btn xs gn" onClick={() => { setDuzenlenenId(null); setModal('tahsilat'); setForm({tarih:today()}) }}>📥 Tahsilat Al</button>
+            <button className="btn xs dn" onClick={() => { setDuzenlenenId(null); setModal('odeme'); setForm({tarih:today()}) }}>📤 Ödeme Yap</button>
           </div>
         </div>
         <div className="tw">
@@ -166,7 +188,10 @@ export default function OperasyonelKasa() {
                       {h.yon==='giris'?'+':'-'}₺{fmt(h.tutar)}
                     </td>
                     <td className="tr" style={{fontWeight:600,color:h._bakiye>=0?'var(--tx1)':'var(--r)'}}>₺{fmt(h._bakiye)}</td>
-                    <td><IslemlerMenu><IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => sil(h.id)}>Sil</IslemlerMenu.Item></IslemlerMenu></td>
+                    <td><IslemlerMenu>
+                      <IslemlerMenu.Item ikon="✏️" onClick={() => duzenleAc(h)}>Düzenle</IslemlerMenu.Item>
+                      <IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => sil(h.id)}>Sil</IslemlerMenu.Item>
+                    </IslemlerMenu></td>
                   </tr>
                 )
               })}
@@ -184,11 +209,11 @@ export default function OperasyonelKasa() {
       </div>
 
       {modal && (
-        <div className="modal-overlay" {...overlayProps(() => setModal(null))}>
+        <div className="modal-overlay" {...overlayProps(() => { setModal(null); setDuzenlenenId(null) })}>
           <div className="modal-box sm" onClick={e => e.stopPropagation()}>
             <div className="modal-head">
-              {modal==='tahsilat' ? '📥 Tahsilat Al' : '📤 Ödeme Yap'}
-              <button onClick={() => setModal(null)} style={{background:'none',border:'none',cursor:'pointer',fontSize:18}}>×</button>
+              {duzenlenenId ? '✏️ Hareket Düzenle' : (modal==='tahsilat' ? '📥 Tahsilat Al' : '📤 Ödeme Yap')}
+              <button onClick={() => { setModal(null); setDuzenlenenId(null) }} style={{background:'none',border:'none',cursor:'pointer',fontSize:18}}>×</button>
             </div>
             <div className="modal-body">
               <div className="fr"><label>Tarih</label>
@@ -211,7 +236,7 @@ export default function OperasyonelKasa() {
               </div>
             </div>
             <div className="modal-foot">
-              <button className="btn" onClick={() => setModal(null)}>İptal</button>
+              <button className="btn" onClick={() => { setModal(null); setDuzenlenenId(null) }}>İptal</button>
               <button className={`btn ${modal==='tahsilat'?'gn':'dn'}`} onClick={kaydet} disabled={kaydediliyor}>
                 {kaydediliyor ? 'Kaydediliyor...' : '💾 Kaydet'}
               </button>
