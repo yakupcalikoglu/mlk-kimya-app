@@ -1,12 +1,14 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
   const [y, m, d] = t.split('-')
   if (!y || !m || !d) return t
   return `${d}/${m}/${y}`
+}
+function fmtSayi(n: number) {
+  return new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 2 }).format(n || 0)
 }
 
 function fmt(n: number) {
@@ -21,7 +23,6 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
   const [form, setForm] = useState<any>({ tarih: today() })
   const [kaydediliyor, setKaydediliyor] = useState(false)
   const [filtreCari, setFiltreCari] = useState('')
-  const [sira, setSira] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
 
   async function yukle() {
     const res = await fetch('/api/cariler', { credentials: 'include' })
@@ -36,12 +37,11 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
     (c.hareketler || [])
       .filter((h: any) => h.tur === 'satis')
       .map((h: any) => ({ ...h, cariAd: c.ad, cariId: c.id }))
-  )
+  ).sort((a, b) => b.tarih?.localeCompare(a.tarih))
 
-  const filtrelendiOnce = filtreCari
+  const filtrelendi = filtreCari
     ? tumSatislar.filter(s => s.cariId === filtreCari)
     : tumSatislar
-  const filtrelendi = siraliVeri(filtrelendiOnce, sira)
 
   const topSatis = filtrelendi.reduce((a, s) => a + (s.tutar || 0), 0)
   const topBidon = filtrelendi.reduce((a, s) => a + (s.adet || 0), 0)
@@ -138,13 +138,9 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
           <table>
             <thead>
               <tr>
-                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tarih'))}>Tarih{siraIkon(sira,'tarih')}</th>
-                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'cariAd'))}>Cari{siraIkon(sira,'cariAd')}</th>
-                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'fatno'))}>Fatura No{siraIkon(sira,'fatno')}</th>
-                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'adet'))}>Adet{siraIkon(sira,'adet')}</th>
-                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'birim'))}>Birim ₺{siraIkon(sira,'birim')}</th>
-                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tutar'))}>Tutar{siraIkon(sira,'tutar')}</th>
-                <th>Açıklama</th><th></th>
+                <th>Tarih</th><th>Cari</th><th>Fatura No</th>
+                <th className="tr">Adet</th><th className="tr">Birim ₺</th>
+                <th className="tr">Tutar</th><th>Açıklama</th><th></th>
               </tr>
             </thead>
             <tbody>
@@ -159,7 +155,7 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
                     </span>
                   </td>
                   <td>{s.fatno || '—'}</td>
-                  <td className="tr">{s.adet}</td>
+                  <td className="tr">{fmtSayi(s.adet)}</td>
                   <td className="tr">₺{fmt(s.birim)}</td>
                   <td className="tr" style={{ fontWeight: 700, color: 'var(--r)' }}>₺{fmt(s.tutar)}</td>
                   <td style={{ fontSize: 11, color: 'var(--tx2)' }}>{s.acik || '—'}</td>
