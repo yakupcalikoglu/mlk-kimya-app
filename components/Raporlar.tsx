@@ -1,6 +1,13 @@
 'use client'
 import { useEffect, useState } from 'react'
 
+function fmtTarih(t: string) {
+  if (!t) return '—'
+  const [y, m, d] = t.split('-')
+  if (!y || !m || !d) return t
+  return `${d}/${m}/${y}`
+}
+
 function fmt(n: number) {
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(n)
 }
@@ -167,7 +174,7 @@ export default function Raporlar() {
               <tbody>
                 {kasa.filter(h => donemFiltre(h.tarih)).sort((a,b) => b.tarih?.localeCompare(a.tarih)).map(h => (
                   <tr key={h.id}>
-                    <td className="tnw">{h.tarih}</td>
+                    <td className="tnw">{fmtTarih(h.tarih)}</td>
                     <td><span className={`badge ${h.yon==='giris'?'bG':'bR'}`}>{h.yon==='giris'?'Giriş':'Çıkış'}</span></td>
                     <td>{h.ad}</td>
                     <td className="tr" style={{ fontWeight: 700, color: h.yon==='giris'?'var(--g)':'var(--r)' }}>
@@ -191,7 +198,7 @@ export default function Raporlar() {
                     <tr key={u.id}>
                       <td style={{ fontWeight: 600, color: 'var(--b)' }}>{u.lot}</td>
                       <td>{u.urun}</td>
-                      <td className="tnw">{u.tarih}</td>
+                      <td className="tnw">{fmtTarih(u.tarih)}</td>
                       <td className="tr">{bidon}</td>
                       <td className="tr">{u.toplam_kg}</td>
                       <td className="tr" style={{ fontWeight: 700 }}>₺{fmt(u.maliyet||0)}</td>

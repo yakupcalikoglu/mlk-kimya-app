@@ -1,6 +1,13 @@
 'use client'
 import { useEffect, useState } from 'react'
 
+function fmtTarih(t: string) {
+  if (!t) return '—'
+  const [y, m, d] = t.split('-')
+  if (!y || !m || !d) return t
+  return `${d}/${m}/${y}`
+}
+
 function fmt(n: number) {
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(n)
 }
@@ -131,7 +138,7 @@ export default function BedelsizNumune() {
               {yukleniyor && <tr><td colSpan={8} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
               {bedelsizler.map((b, i) => (
                 <tr key={i}>
-                  <td className="tnw">{b.tarih}</td>
+                  <td className="tnw">{fmtTarih(b.tarih)}</td>
                   <td style={{ fontWeight: 500 }}>{b.cariAd}</td>
                   <td className="tr">{b.adet}</td>
                   <td className="tr">₺{fmt(b.birim || 0)}</td>

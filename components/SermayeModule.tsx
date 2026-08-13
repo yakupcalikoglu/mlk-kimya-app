@@ -2,6 +2,13 @@
 
 import { useEffect, useState, useCallback } from 'react'
 
+function fmtTarih(t: string) {
+  if (!t) return '—'
+  const [y, m, d] = t.split('-')
+  if (!y || !m || !d) return t
+  return `${d}/${m}/${y}`
+}
+
 // ─── Tipler ───────────────────────────────────────────────
 interface Ortak {
   id: number
@@ -204,7 +211,7 @@ export default function SermayeModule() {
               {[...odemeler].sort((a, b) => b.tarih?.localeCompare(a.tarih)).map((x, i) => (
                 <tr key={x.id}>
                   <td>{i + 1}</td>
-                  <td className="tnw">{x.tarih}</td>
+                  <td className="tnw">{fmtTarih(x.tarih)}</td>
                   <td style={{ fontWeight: 500 }}>{x.ortak_ad}</td>
                   <td>{x.aciklama || '—'}</td>
                   <td><span className="badge bB">{x.tur === 'nakit' ? 'Nakit' : x.tur === 'havale' ? 'Havale' : 'Çek'}</span></td>
@@ -243,7 +250,7 @@ export default function SermayeModule() {
               {[...iadeler].sort((a, b) => b.tarih?.localeCompare(a.tarih)).map((x, i) => (
                 <tr key={x.id}>
                   <td>{i + 1}</td>
-                  <td className="tnw">{x.tarih}</td>
+                  <td className="tnw">{fmtTarih(x.tarih)}</td>
                   <td style={{ fontWeight: 500 }}>{x.ortak_ad}</td>
                   <td><span className="badge bR">{
                     { nakit_iade: 'Nakit İade', mahsup_mal: 'Mal Mahsubu', mahsup_makine: 'Makine Mahsubu', mahsup_kira: 'Kira Mahsubu', diger: 'Diğer Mahsup' }[x.tur]

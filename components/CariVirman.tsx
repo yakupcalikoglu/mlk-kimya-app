@@ -1,6 +1,13 @@
 'use client'
 import { useEffect, useState } from 'react'
 
+function fmtTarih(t: string) {
+  if (!t) return '—'
+  const [y, m, d] = t.split('-')
+  if (!y || !m || !d) return t
+  return `${d}/${m}/${y}`
+}
+
 function fmt(n: number) {
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(n)
 }
@@ -148,7 +155,7 @@ export default function CariVirman() {
               {yukleniyor && <tr><td colSpan={8} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
               {[...virmanlar].sort((a,b) => b.tarih?.localeCompare(a.tarih)).map(v => (
                 <tr key={v.id}>
-                  <td className="tnw">{v.tarih}</td>
+                  <td className="tnw">{fmtTarih(v.tarih)}</td>
                   <td style={{ color: 'var(--r)', fontWeight: 500 }}>{cariAd(v.kaynak_id)}</td>
                   <td style={{ color: 'var(--g)', fontWeight: 500 }}>{cariAd(v.hedef_id)}</td>
                   <td className="tr">{v.adet}</td>

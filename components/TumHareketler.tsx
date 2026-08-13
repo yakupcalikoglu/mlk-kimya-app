@@ -1,6 +1,13 @@
 'use client'
 import { useEffect, useState } from 'react'
 
+function fmtTarih(t: string) {
+  if (!t) return '—'
+  const [y, m, d] = t.split('-')
+  if (!y || !m || !d) return t
+  return `${d}/${m}/${y}`
+}
+
 function fmt(n: number) {
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(n)
 }
@@ -136,7 +143,7 @@ export default function TumHareketler({ onCariSec }: { onCariSec?: (id: string) 
 
                 return (
                   <tr key={i}>
-                    <td className="tnw">{h.tarih}</td>
+                    <td className="tnw">{fmtTarih(h.tarih)}</td>
                     <td>
                       {isKasa
                         ? <span className="badge bA">Kasa</span>

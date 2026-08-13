@@ -1,6 +1,13 @@
 'use client'
 import { useEffect, useState } from 'react'
 
+function fmtTarih(t: string) {
+  if (!t) return '—'
+  const [y, m, d] = t.split('-')
+  if (!y || !m || !d) return t
+  return `${d}/${m}/${y}`
+}
+
 function fmt(n: number) {
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(n)
 }
@@ -137,7 +144,7 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
               {yukleniyor && <tr><td colSpan={8} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
               {filtrelendi.map(s => (
                 <tr key={`${s.cariId}-${s.id}`}>
-                  <td className="tnw">{s.tarih}</td>
+                  <td className="tnw">{fmtTarih(s.tarih)}</td>
                   <td>
                     <span style={{ cursor: 'pointer', color: 'var(--b)', fontWeight: 500 }}
                       onClick={() => onCariSec?.(s.cariId)}>

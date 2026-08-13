@@ -1,6 +1,13 @@
 'use client'
 import { useEffect, useState } from 'react'
 
+function fmtTarih(t: string) {
+  if (!t) return '—'
+  const [y, m, d] = t.split('-')
+  if (!y || !m || !d) return t
+  return `${d}/${m}/${y}`
+}
+
 function fmt(n: number) {
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n || 0)
 }
@@ -144,7 +151,7 @@ export default function Fatura() {
               {sirali.map(f => (
                 <tr key={f.id}>
                   <td style={{ fontWeight: 600, color: 'var(--b)' }}>{f.fatura_no}</td>
-                  <td className="tnw">{f.tarih}</td>
+                  <td className="tnw">{fmtTarih(f.tarih)}</td>
                   <td>{f.musteri_ad}</td>
                   <td className="tr">₺{fmt(f.ara_toplam)}</td>
                   <td className="tr">₺{fmt(f.kdv_toplam)}</td>
@@ -267,7 +274,7 @@ function FaturaYazdirGorunumu({ fatura, onClose }: { fatura: Fatura; onClose: ()
             </div>
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontWeight: 700 }}>{fatura.fatura_no}</div>
-              <div style={{ fontSize: 12, color: 'var(--tx2)' }}>{fatura.tarih}</div>
+              <div style={{ fontSize: 12, color: 'var(--tx2)' }}>{fmtTarih(fatura.tarih)}</div>
             </div>
           </div>
 

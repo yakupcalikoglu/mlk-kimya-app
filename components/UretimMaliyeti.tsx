@@ -1,6 +1,13 @@
 'use client'
 import { useEffect, useState } from 'react'
 
+function fmtTarih(t: string) {
+  if (!t) return '—'
+  const [y, m, d] = t.split('-')
+  if (!y || !m || !d) return t
+  return `${d}/${m}/${y}`
+}
+
 function fmt(n: number) {
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(n)
 }
@@ -55,7 +62,7 @@ export default function UretimMaliyeti() {
                   <tr key={u.id}>
                     <td style={{ fontWeight: 600, color: 'var(--b)' }}>{u.lot}</td>
                     <td>{u.urun}</td>
-                    <td className="tnw">{u.tarih}</td>
+                    <td className="tnw">{fmtTarih(u.tarih)}</td>
                     <td className="tr">{u.toplam_kg}</td>
                     <td className="tr">{bidon}</td>
                     <td className="tr" style={{ fontWeight: 700, color: 'var(--r)' }}>
@@ -94,7 +101,7 @@ export default function UretimMaliyeti() {
             </div>
             <div className="modal-body">
               <div className="finfo" style={{ marginBottom: 12 }}>
-                <b>{secili.urun}</b> — {secili.tarih} — {secili.toplam_kg} kg
+                <b>{secili.urun}</b> — {fmtTarih(secili.tarih)} — {secili.toplam_kg} kg
               </div>
               <div className="fr"><label>Hammadde Maliyeti (₺)</label>
                 <input type="number"

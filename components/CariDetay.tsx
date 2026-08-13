@@ -1,6 +1,13 @@
 'use client'
 import { useEffect, useState } from 'react'
 
+function fmtTarih(t: string) {
+  if (!t) return '—'
+  const [y, m, d] = t.split('-')
+  if (!y || !m || !d) return t
+  return `${d}/${m}/${y}`
+}
+
 function fmt(n: number) {
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(n)
 }
@@ -170,7 +177,7 @@ export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: 
             <tbody>
               {(cari.hareketler || []).slice().reverse().map((h:any) => (
                 <tr key={h.id}>
-                  <td className="tnw">{h.tarih}</td>
+                  <td className="tnw">{fmtTarih(h.tarih)}</td>
                   <td>
                     <span className={`badge ${h.tur==='satis'?'bB':h.tur==='tahsilat'?'bG':'bX'}`}>
                       {h.tur==='satis'?'Satış':h.tur==='tahsilat'?'Tahsilat':h.tur}

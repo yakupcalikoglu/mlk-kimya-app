@@ -1,6 +1,13 @@
 'use client'
 import { useEffect, useState } from 'react'
 
+function fmtTarih(t: string) {
+  if (!t) return '—'
+  const [y, m, d] = t.split('-')
+  if (!y || !m || !d) return t
+  return `${d}/${m}/${y}`
+}
+
 function fmt(n: number) {
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(n)
 }
@@ -79,7 +86,7 @@ export default function UrunStogu() {
                   <tr key={s.id}>
                     <td style={{ fontWeight: 600, color: 'var(--b)' }}>{s.lot}</td>
                     <td>{s.urun}</td>
-                    <td className="tnw">{s.tarih}</td>
+                    <td className="tnw">{fmtTarih(s.tarih)}</td>
                     <td className="tr">{s.topBidon}</td>
                     <td className="tr" style={{ color: 'var(--r)' }}>{s.satilan}</td>
                     <td className="tr" style={{ fontWeight: 700, color: durum.renk }}>{s.kalan}</td>

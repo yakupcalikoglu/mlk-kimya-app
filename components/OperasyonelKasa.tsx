@@ -1,6 +1,13 @@
 'use client'
 import { useEffect, useState } from 'react'
 
+function fmtTarih(t: string) {
+  if (!t) return '—'
+  const [y, m, d] = t.split('-')
+  if (!y || !m || !d) return t
+  return `${d}/${m}/${y}`
+}
+
 function fmt(n: number) {
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(n)
 }
@@ -121,7 +128,7 @@ export default function OperasyonelKasa() {
                 const cari = cariler.find(c => c.id === h.cari_ref)
                 return (
                   <tr key={h.id}>
-                    <td className="tnw">{h.tarih}</td>
+                    <td className="tnw">{fmtTarih(h.tarih)}</td>
                     <td>
                       <span className={`badge ${h.yon==='giris'?'bG':'bR'}`}>
                         {h.yon==='giris'?'Giriş':'Çıkış'}

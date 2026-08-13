@@ -1,6 +1,13 @@
 'use client'
 import { useEffect, useState } from 'react'
 
+function fmtTarih(t: string) {
+  if (!t) return '—'
+  const [y, m, d] = t.split('-')
+  if (!y || !m || !d) return t
+  return `${d}/${m}/${y}`
+}
+
 function fmt(n: number) {
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(n)
 }
@@ -83,7 +90,7 @@ export default function EnginHesabi() {
               {yukleniyor && <tr><td colSpan={5} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
               {tumHar.map(h => (
                 <tr key={`${h.tip}-${h.id}`}>
-                  <td className="tnw">{h.tarih}</td>
+                  <td className="tnw">{fmtTarih(h.tarih)}</td>
                   <td><span className={`badge ${h.tip === 'tahsilat' ? 'bG' : 'bR'}`}>{h.tip === 'tahsilat' ? 'Tahsilat' : 'Harcama'}</span></td>
                   <td>{h.ad}</td>
                   <td className="tr" style={{ fontWeight: 700, color: h.tip === 'tahsilat' ? 'var(--g)' : 'var(--r)' }}>
