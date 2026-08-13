@@ -9,6 +9,8 @@ const supabase = createClient(
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   const session = req.cookies.get('mlk_session')
   if (!session) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
+  let u: any = null; try { u = JSON.parse(session.value) } catch {}
+  if (!u || u.role === 'goruntule') return NextResponse.json({ error: 'Yetkisiz — görüntüleme yetkisiyle silme/düzenleme yapılamaz' }, { status: 403 })
   const { error } = await supabase.from('mlk_kasa').delete().eq('id', params.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
