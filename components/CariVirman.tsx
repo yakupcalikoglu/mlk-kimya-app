@@ -61,11 +61,14 @@ export default function CariVirman() {
     const acik = form.acik || ''
 
     // Kaynak cariden düş
+    const kaynakHarId = Date.now()
+    const hedefHarId = Date.now() + 1
+
     const kaynak = cariler.find(c => c.id === form.kaynakId)
     const kaynakHar = [...(kaynak?.hareketler || [])]
     const kaynakBak = kaynakHar.length ? kaynakHar[kaynakHar.length-1].bakiye : 0
     kaynakHar.push({
-      id: Date.now(), tarih, tur: 'virman_cikis',
+      id: kaynakHarId, tarih, tur: 'virman_cikis',
       adet, birim: birimFiyat, tutar: 0,
       tahsilat: tutar, bakiye: kaynakBak - tutar,
       acik: `Virman → ${cariAd(form.hedefId)}${acik ? ' — ' + acik : ''}`
@@ -76,7 +79,7 @@ export default function CariVirman() {
     const hedefHar = [...(hedef?.hareketler || [])]
     const hedefBak = hedefHar.length ? hedefHar[hedefHar.length-1].bakiye : 0
     hedefHar.push({
-      id: Date.now() + 1, tarih, tur: 'virman_giris',
+      id: hedefHarId, tarih, tur: 'virman_giris',
       adet, birim: birimFiyat, tutar,
       tahsilat: 0, bakiye: hedefBak + tutar,
       acik: `Virman ← ${cariAd(form.kaynakId)}${acik ? ' — ' + acik : ''}`
@@ -97,7 +100,10 @@ export default function CariVirman() {
     // Virman kaydını da sakla
     await fetch('/api/virman', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-      body: JSON.stringify({ tarih, kaynak_id: form.kaynakId, hedef_id: form.hedefId, adet, birim_fiyat: birimFiyat, tutar, acik })
+      body: JSON.stringify({
+        tarih, kaynak_id: form.kaynakId, hedef_id: form.hedefId, adet, birim_fiyat: birimFiyat, tutar, acik,
+        kaynak_har_id: kaynakHarId, hedef_har_id: hedefHarId
+      })
     })
 
     await yukle()
@@ -112,8 +118,12 @@ export default function CariVirman() {
     // Kaynak cariden geri al
     const kaynak = cariler.find(c => c.id === v.kaynak_id)
     if (kaynak) {
+      // Eski (kaynak_har_id'siz) virman kayıtları için geriye dönük uyumluluk:
+      // id varsa ona göre, yoksa eski heuristiğe göre eşleştir.
       let har = (kaynak.hareketler || []).filter((h: any) =>
-        !(h.tur === 'virman_cikis' && h.tarih === v.tarih && h.tahsilat === v.tutar)
+        v.kaynak_har_id
+          ? h.id !== v.kaynak_har_id
+          : !(h.tur === 'virman_cikis' && h.tarih === v.tarih && h.tahsilat === v.tutar)
       )
       let bak = 0
       har = har.map((h: any) => { bak += (h.tutar||0)-(h.tahsilat||0); return {...h, bakiye: bak} })
@@ -127,7 +137,9 @@ export default function CariVirman() {
     const hedef = cariler.find(c => c.id === v.hedef_id)
     if (hedef) {
       let har = (hedef.hareketler || []).filter((h: any) =>
-        !(h.tur === 'virman_giris' && h.tarih === v.tarih && h.tutar === v.tutar)
+        v.hedef_har_id
+          ? h.id !== v.hedef_har_id
+          : !(h.tur === 'virman_giris' && h.tarih === v.tarih && h.tutar === v.tutar)
       )
       let bak = 0
       har = har.map((h: any) => { bak += (h.tutar||0)-(h.tahsilat||0); return {...h, bakiye: bak} })
