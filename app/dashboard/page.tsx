@@ -21,6 +21,7 @@ import UretimMaliyeti from '@/components/UretimMaliyeti'
 import Raporlar from '@/components/Raporlar'
 import AnaKasa from '@/components/AnaKasa'
 import Fatura from '@/components/Fatura'
+import { AdminOnayProvider } from '@/components/AdminOnaySistemi'
 
 export default function Dashboard() {
   const [aktifSayfa, setAktifSayfa] = useState('ozet')
@@ -59,6 +60,7 @@ export default function Dashboard() {
   const sayfalar = Object.keys(sayfaBasliklari)
 
   return (
+    <AdminOnayProvider>
     <div className="app-layout">
       <div className={`sb-overlay ${sidebarAcik ? 'open' : ''}`} onClick={() => setSidebarAcik(false)} />
       <Sidebar aktif={aktifSayfa} onChange={sayfaDegis} isOpen={sidebarAcik} />
@@ -94,5 +96,6 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
+    </AdminOnayProvider>
   )
 }
