@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import IslemlerMenu from '@/components/IslemlerMenu'
 import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 import { useAdminOnay } from '@/components/AdminOnaySistemi'
@@ -180,7 +181,7 @@ export default function BedelsizNumune() {
                     </span>
                   </td>
                   <td style={{ fontSize: 11, color: 'var(--tx2)' }}>{b.acik || '—'}</td>
-                  <td><button className="btn xs dn" onClick={() => bedelsizSil(b.cariId, b.id)}>🗑</button></td>
+                  <td><IslemlerMenu><IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => bedelsizSil(b.cariId, b.id)}>Sil</IslemlerMenu.Item></IslemlerMenu></td>
                 </tr>
               ))}
               {!yukleniyor && !bedelsizler.length && (

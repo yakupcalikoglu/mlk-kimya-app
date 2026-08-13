@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import IslemlerMenu from '@/components/IslemlerMenu'
 import SayiInput from '@/components/SayiInput'
 import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
@@ -104,7 +105,7 @@ export default function MarmaraLift() {
                   <td className="tr" style={{ fontWeight: 700, color: h.yon === 'giris' ? 'var(--g)' : 'var(--r)' }}>
                     {h.yon === 'giris' ? '+' : '-'}₺{fmt(h.tutar)}
                   </td>
-                  <td><button className="btn xs dn" onClick={() => harSil(h.id)}>🗑</button></td>
+                  <td><IslemlerMenu><IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => harSil(h.id)}>Sil</IslemlerMenu.Item></IslemlerMenu></td>
                 </tr>
               ))}
               {!yukleniyor && !hareketler.length && <tr><td colSpan={6} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Hareket yok</td></tr>}

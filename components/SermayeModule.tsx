@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import IslemlerMenu from '@/components/IslemlerMenu'
 import SayiInput from '@/components/SayiInput'
 import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
@@ -199,11 +200,11 @@ export default function SermayeModule() {
                     <td className="tr" style={{ color: 'var(--r)' }}>{o.iade > 0 ? `₺${fmt(o.iade)}` : '—'}</td>
                     <td className="tr" style={{ fontWeight: 700, color: 'var(--b)' }}>₺{fmt(o.net)}</td>
                     <td>
-                      <div className="td-actions">
-                        <button className="btn xs gn" title="İade / Mahsup ekle" onClick={() => setIadeModal({ open: true, ortakId: o.id })}>↩️</button>
-                        <button className="btn xs te" title="Düzenle" onClick={() => setOrtakModal({ open: true, data: o })}>✏️</button>
-                        <button className="btn xs dn" title="Sil" onClick={() => ortakSil(o.id)}>🗑</button>
-                      </div>
+                      <IslemlerMenu>
+                        <IslemlerMenu.Item ikon="↩️" onClick={() => setIadeModal({ open: true, ortakId: o.id })}>İade / Mahsup ekle</IslemlerMenu.Item>
+                        <IslemlerMenu.Item ikon="✏️" onClick={() => setOrtakModal({ open: true, data: o })}>Düzenle</IslemlerMenu.Item>
+                        <IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => ortakSil(o.id)}>Sil</IslemlerMenu.Item>
+                      </IslemlerMenu>
                     </td>
                   </tr>
                 )
@@ -248,11 +249,11 @@ export default function SermayeModule() {
                   <td className="tr" style={{ fontWeight: 700, color: x.durum === 'odendi' ? 'var(--g)' : 'var(--a)' }}>₺{fmt(x.tutar)}</td>
                   <td><span className={`badge ${x.durum === 'odendi' ? 'bG' : 'bA'}`}>{x.durum === 'odendi' ? 'Ödendi' : 'Bekliyor'}</span></td>
                   <td>
-                    <div className="td-actions">
-                      {x.durum === 'bekliyor' && <button className="btn xs gn" title="Ödendi işaretle" onClick={() => odendiYap(x.id)}>✅</button>}
-                      <button className="btn xs te" title="Düzenle" onClick={() => setOdemeModal({ open: true, data: x })}>✏️</button>
-                      <button className="btn xs dn" title="Sil" onClick={() => odemeSil(x.id)}>🗑</button>
-                    </div>
+                    <IslemlerMenu>
+                      {x.durum === 'bekliyor' && <IslemlerMenu.Item ikon="✅" onClick={() => odendiYap(x.id)}>Ödendi işaretle</IslemlerMenu.Item>}
+                      <IslemlerMenu.Item ikon="✏️" onClick={() => setOdemeModal({ open: true, data: x })}>Düzenle</IslemlerMenu.Item>
+                      <IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => odemeSil(x.id)}>Sil</IslemlerMenu.Item>
+                    </IslemlerMenu>
                   </td>
                 </tr>
               ))}

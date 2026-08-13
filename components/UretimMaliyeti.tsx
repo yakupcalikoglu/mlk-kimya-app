@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import IslemlerMenu from '@/components/IslemlerMenu'
 import SayiInput from '@/components/SayiInput'
 import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
@@ -113,10 +114,10 @@ export default function UretimMaliyeti() {
                   <td className="tr" style={{ fontWeight: 600 }}>₺{fmt(g.tutar)}</td>
                   <td style={{ fontSize: 11, color: 'var(--tx2)' }}>{g.not_metin || '--'}</td>
                   <td>
-                    <div className="td-actions">
-                      <button className="btn xs te" onClick={() => setGiderModal({ open: true, data: g })}>✏️</button>
-                      <button className="btn xs dn" onClick={() => giderSil(g.id)}>🗑</button>
-                    </div>
+                    <IslemlerMenu>
+                      <IslemlerMenu.Item ikon="✏️" onClick={() => setGiderModal({ open: true, data: g })}>Düzenle</IslemlerMenu.Item>
+                      <IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => giderSil(g.id)}>Sil</IslemlerMenu.Item>
+                    </IslemlerMenu>
                   </td>
                 </tr>
               ))}

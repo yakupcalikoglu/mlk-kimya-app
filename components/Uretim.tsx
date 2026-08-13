@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import IslemlerMenu from '@/components/IslemlerMenu'
 import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 import { useAdminOnay } from '@/components/AdminOnaySistemi'
@@ -116,8 +117,10 @@ export default function Uretim() {
                   {r.aciklama && <div style={{ fontSize: 12, color: 'var(--tx2)' }}>{r.aciklama} — {r.standart_kg} kg/batch</div>}
                 </div>
                 <button className="btn xs gn" onClick={() => setUretModal({ open: true, recete: r })}>🚗 Üret</button>
-                <button className="btn xs te" onClick={() => setReceteModal({ open: true, data: r })}>✏️</button>
-                <button className="btn xs dn" onClick={() => receteSil(r.id)}>🗑</button>
+                <IslemlerMenu>
+                  <IslemlerMenu.Item ikon="✏️" onClick={() => setReceteModal({ open: true, data: r })}>Düzenle</IslemlerMenu.Item>
+                  <IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => receteSil(r.id)}>Sil</IslemlerMenu.Item>
+                </IslemlerMenu>
               </div>
               <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {r.kalemler.map((k, i) => (
@@ -170,7 +173,7 @@ export default function Uretim() {
                     </td>
                     <td className="tr">{fmt(u.toplam_kg)} kg</td>
                     <td className="tr">₺{fmt(u.maliyet || 0)}</td>
-                    <td><button className="btn xs dn" onClick={() => uretimSil(u.id)}>🗑</button></td>
+                    <td><IslemlerMenu><IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => uretimSil(u.id)}>Sil</IslemlerMenu.Item></IslemlerMenu></td>
                   </tr>
                 )
               })}

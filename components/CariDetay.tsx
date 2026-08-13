@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import IslemlerMenu from '@/components/IslemlerMenu'
 import SayiInput from '@/components/SayiInput'
 import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
@@ -210,10 +211,10 @@ export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: 
                     {h.acik||'—'}
                   </td>
                   <td>
-                    <div className="td-actions">
-                      <button className="btn xs te" onClick={() => harDuzenleAc(h)}>✏️</button>
-                      <button className="btn xs dn" onClick={() => harSil(h.id)}>🗑</button>
-                    </div>
+                    <IslemlerMenu>
+                      <IslemlerMenu.Item ikon="✏️" onClick={() => harDuzenleAc(h)}>Düzenle</IslemlerMenu.Item>
+                      <IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => harSil(h.id)}>Sil</IslemlerMenu.Item>
+                    </IslemlerMenu>
                   </td>
                 </tr>
               ))}

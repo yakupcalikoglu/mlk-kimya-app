@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import IslemlerMenu from '@/components/IslemlerMenu'
 import SayiInput from '@/components/SayiInput'
 import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
@@ -109,7 +110,7 @@ export default function EnginHesabi() {
                   <td className="tr" style={{ fontWeight: 700, color: h.tip === 'tahsilat' ? 'var(--g)' : 'var(--r)' }}>
                     {h.tip === 'tahsilat' ? '+' : '-'}₺{fmt(h.tutar)}
                   </td>
-                  <td><button className="btn xs dn" onClick={() => sil(h.id, h.tip)}>🗑</button></td>
+                  <td><IslemlerMenu><IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => sil(h.id, h.tip)}>Sil</IslemlerMenu.Item></IslemlerMenu></td>
                 </tr>
               ))}
               {!yukleniyor && !tumHarSirali.length && <tr><td colSpan={5} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Hareket yok</td></tr>}

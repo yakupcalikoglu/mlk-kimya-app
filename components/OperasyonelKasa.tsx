@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import IslemlerMenu from '@/components/IslemlerMenu'
 import SayiInput from '@/components/SayiInput'
 import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
@@ -165,7 +166,7 @@ export default function OperasyonelKasa() {
                       {h.yon==='giris'?'+':'-'}₺{fmt(h.tutar)}
                     </td>
                     <td className="tr" style={{fontWeight:600,color:h._bakiye>=0?'var(--tx1)':'var(--r)'}}>₺{fmt(h._bakiye)}</td>
-                    <td><button className="btn xs dn" onClick={() => sil(h.id)}>🗑</button></td>
+                    <td><IslemlerMenu><IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => sil(h.id)}>Sil</IslemlerMenu.Item></IslemlerMenu></td>
                   </tr>
                 )
               })}

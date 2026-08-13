@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import IslemlerMenu from '@/components/IslemlerMenu'
 import SayiInput from '@/components/SayiInput'
 import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
@@ -260,14 +261,12 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
                     <td><span className={`badge ${bedelsiz ? 'bP' : 'bB'}`}>{bedelsiz ? 'Bedelsiz' : 'Satış'}</span></td>
                     <td>{s.acik || '—'}</td>
                     <td>
-                      <div className="td-actions">
-                        {!bedelsiz && kalan > 0 && (
-                          <button className="btn xs gn" title="Tahsilat Al" onClick={() => setTahsilModal({ open: true, satis: s })}>💰</button>
-                        )}
-                        {!bedelsiz && (
-                          <button className="btn xs dn" title="Sil" onClick={() => satisSil(s.cariId, s.id)}>🗑</button>
-                        )}
-                      </div>
+                      {!bedelsiz && (
+                        <IslemlerMenu>
+                          {kalan > 0 && <IslemlerMenu.Item ikon="💰" onClick={() => setTahsilModal({ open: true, satis: s })}>Tahsilat Al</IslemlerMenu.Item>}
+                          <IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => satisSil(s.cariId, s.id)}>Sil</IslemlerMenu.Item>
+                        </IslemlerMenu>
+                      )}
                     </td>
                   </tr>
                 )

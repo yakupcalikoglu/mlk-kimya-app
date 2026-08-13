@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import IslemlerMenu from '@/components/IslemlerMenu'
 import SayiInput from '@/components/SayiInput'
 import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
@@ -206,7 +207,7 @@ export default function CariVirman() {
                     <td className="tr">{v.konu === 'para' ? '—' : '₺' + fmt(v.birim_fiyat)}</td>
                     <td className="tr" style={{ fontWeight: 700 }}>₺{fmt(v.tutar)}</td>
                     <td style={{ fontSize: 11, color: 'var(--tx2)' }}>{v.acik || '—'}</td>
-                    <td><button className="btn xs dn" onClick={() => virmanSil(v)}>🗑</button></td>
+                    <td><IslemlerMenu><IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => virmanSil(v)}>Sil</IslemlerMenu.Item></IslemlerMenu></td>
                   </tr>
                 )
               })}

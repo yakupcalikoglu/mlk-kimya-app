@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import IslemlerMenu from '@/components/IslemlerMenu'
 import SayiInput from '@/components/SayiInput'
 import { overlayProps } from '@/lib/modalOverlay'
 import { useAdminOnay } from '@/components/AdminOnaySistemi'
@@ -110,7 +111,7 @@ export default function HammaddeStogu() {
                 <span style={{ fontSize: 12, color: 'var(--tx2)' }}>Toplam Çıkan: <b>{fmt(toplamCikan)} {h.birim}</b></span>
                 <span style={{ fontSize: 12 }}>Güncel Stok: <b style={{ color: durum.renk }}>{fmt(h.guncel_stok)} {h.birim}</b></span>
                 <span style={{ fontSize: 12, color: 'var(--tx2)' }}>Ort. Birim Fiyat: <b>₺{fmt(h.birim_fiyat)}</b></span>
-                <button className="btn xs dn" onClick={() => hammaddeSil(h.id)}>🗑</button>
+                <IslemlerMenu><IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => hammaddeSil(h.id)}>Hammaddeyi Sil</IslemlerMenu.Item></IslemlerMenu>
               </div>
             </div>
 
@@ -138,7 +139,7 @@ export default function HammaddeStogu() {
                         <td>{a.odeme || '—'}</td>
                         <td>{a.fat_no || '—'}</td>
                         <td>{a.not_metin || '—'}</td>
-                        <td><button className="btn xs dn" onClick={() => alimSil(a.id)}>🗑</button></td>
+                        <td><IslemlerMenu><IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => alimSil(a.id)}>Sil</IslemlerMenu.Item></IslemlerMenu></td>
                       </tr>
                     ))}
                   </tbody>
@@ -159,7 +160,7 @@ export default function HammaddeStogu() {
                         <td className="tr" style={{ color: 'var(--r)', fontWeight: 600 }}>{fmt(c.miktar)} {h.birim}</td>
                         <td>{c.neden ? <span className="badge bB">{c.neden}</span> : '—'}</td>
                         <td>{c.not_metin || '—'}</td>
-                        <td><button className="btn xs dn" onClick={() => cikisSil(c.id)}>🗑</button></td>
+                        <td><IslemlerMenu><IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => cikisSil(c.id)}>Sil</IslemlerMenu.Item></IslemlerMenu></td>
                       </tr>
                     ))}
                   </tbody>

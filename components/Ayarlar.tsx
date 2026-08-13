@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import IslemlerMenu from '@/components/IslemlerMenu'
 import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 import { useAdminOnay } from '@/components/AdminOnaySistemi'
@@ -99,12 +100,12 @@ export default function Ayarlar() {
                     </span>
                   </td>
                   <td>
-                    <div className="td-actions">
-                      <button className="btn xs te" onClick={() => { setForm({ ...u, password: '', password2: '' }); setModal(true) }}>✏️</button>
+                    <IslemlerMenu>
+                      <IslemlerMenu.Item ikon="✏️" onClick={() => { setForm({ ...u, password: '', password2: '' }); setModal(true) }}>Düzenle</IslemlerMenu.Item>
                       {u.username !== 'yakup' && (
-                        <button className="btn xs dn" onClick={() => kulSil(u.id)}>🗑</button>
+                        <IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => kulSil(u.id)}>Sil</IslemlerMenu.Item>
                       )}
-                    </div>
+                    </IslemlerMenu>
                   </td>
                 </tr>
               ))}

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import IslemlerMenu from '@/components/IslemlerMenu'
 import SayiInput from '@/components/SayiInput'
 import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
@@ -174,10 +175,10 @@ export default function Fatura() {
                   <td className="tr">₺{fmt(f.kdv_toplam)}</td>
                   <td className="tr" style={{ fontWeight: 700 }}>₺{fmt(f.genel_toplam)}</td>
                   <td>
-                    <div className="td-actions">
-                      <button className="btn xs am" title="Görüntüle / Yazdır" onClick={() => setYazdirFatura(f)}>🖨️</button>
-                      <button className="btn xs dn" title="Sil" onClick={() => sil(f.id)}>🗑</button>
-                    </div>
+                    <IslemlerMenu>
+                      <IslemlerMenu.Item ikon="🖨️" onClick={() => setYazdirFatura(f)}>Görüntüle / Yazdır</IslemlerMenu.Item>
+                      <IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => sil(f.id)}>Sil</IslemlerMenu.Item>
+                    </IslemlerMenu>
                   </td>
                 </tr>
               ))}
