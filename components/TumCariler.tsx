@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(n)
@@ -9,6 +10,7 @@ export default function TumCariler({ onCariSec }: { onCariSec: (id: string) => v
   const [cariler, setCariler] = useState<any[]>([])
   const [yukleniyor, setYukleniyor] = useState(true)
   const [aramaKelime, setAramaKelime] = useState('')
+  const [sira, setSira] = useState<SiraState>({ alan: 'ad', yon: 'asc' })
 
   useEffect(() => {
     fetch('/api/cariler', { credentials: 'include' }).then(r => r.json()).then(d => {
@@ -30,7 +32,10 @@ export default function TumCariler({ onCariSec }: { onCariSec: (id: string) => v
     return (c.hareketler||[]).filter((h:any)=>h.tur==='tahsilat').reduce((a:number,h:any)=>a+(h.tahsilat||0),0)
   }
 
-  const filtre = cariler.filter(c => c.ad?.toLowerCase().includes(aramaKelime.toLowerCase()))
+  const filtre = cariler
+    .filter(c => c.ad?.toLowerCase().includes(aramaKelime.toLowerCase()))
+    .map(c => ({ ...c, _satis: topSatis(c), _tahsilat: topTahsilat(c), _bakiye: sonBakiye(c) }))
+  const gosterilecek = siraliVeri(filtre, sira)
 
   return (
     <div>
@@ -46,17 +51,23 @@ export default function TumCariler({ onCariSec }: { onCariSec: (id: string) => v
         <div className="tw">
           <table>
             <thead>
-              <tr><th>Cari Adı</th><th className="tr">Toplam Satış</th><th className="tr">Tahsilat</th><th className="tr">Bakiye</th><th></th></tr>
+              <tr>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s, 'ad'))}>Cari Adı{siraIkon(sira,'ad')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s, '_satis'))}>Toplam Satış{siraIkon(sira,'_satis')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s, '_tahsilat'))}>Tahsilat{siraIkon(sira,'_tahsilat')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s, '_bakiye'))}>Bakiye{siraIkon(sira,'_bakiye')}</th>
+                <th></th>
+              </tr>
             </thead>
             <tbody>
               {yukleniyor && <tr><td colSpan={5} style={{textAlign:'center',padding:20,color:'var(--tx2)'}}>Yükleniyor...</td></tr>}
-              {filtre.map(c => {
-                const bak = sonBakiye(c)
+              {gosterilecek.map(c => {
+                const bak = c._bakiye
                 return (
                   <tr key={c.id} style={{cursor:'pointer'}} onClick={() => onCariSec(c.id)}>
                     <td style={{fontWeight:500}}>{c.ad}</td>
-                    <td className="tr">₺{fmt(topSatis(c))}</td>
-                    <td className="tr" style={{color:'var(--g)'}}>₺{fmt(topTahsilat(c))}</td>
+                    <td className="tr">₺{fmt(c._satis)}</td>
+                    <td className="tr" style={{color:'var(--g)'}}>₺{fmt(c._tahsilat)}</td>
                     <td className="tr" style={{fontWeight:700,color:bak>0?'var(--r)':bak<0?'var(--b)':'var(--tx2)'}}>
                       ₺{fmt(Math.abs(bak))}
                       {bak<0 && <span style={{fontSize:10,marginLeft:4,color:'var(--b)'}}>↩</span>}
@@ -72,3 +83,4 @@ export default function TumCariler({ onCariSec }: { onCariSec: (id: string) => v
     </div>
   )
 }
+

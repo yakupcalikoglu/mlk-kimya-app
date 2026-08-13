@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
@@ -19,6 +20,7 @@ export default function MarmaraLift() {
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState<any>({ tarih: today() })
   const [kaydediliyor, setKaydediliyor] = useState(false)
+  const [sira, setSira] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
 
   async function yukle() {
     const res = await fetch('/api/marmara-lift', { credentials: 'include' })
@@ -74,10 +76,16 @@ export default function MarmaraLift() {
         </div>
         <div className="tw">
           <table>
-            <thead><tr><th>Tarih</th><th>Yön</th><th>Açıklama</th><th className="tr">Tutar</th><th></th></tr></thead>
+            <thead><tr>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tarih'))}>Tarih{siraIkon(sira,'tarih')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'yon'))}>Yön{siraIkon(sira,'yon')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'ad'))}>Açıklama{siraIkon(sira,'ad')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tutar'))}>Tutar{siraIkon(sira,'tutar')}</th>
+                <th></th>
+              </tr></thead>
             <tbody>
               {yukleniyor && <tr><td colSpan={5} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
-              {[...hareketler].sort((a, b) => b.tarih?.localeCompare(a.tarih)).map(h => (
+              {siraliVeri(hareketler, sira).map(h => (
                 <tr key={h.id}>
                   <td className="tnw">{fmtTarih(h.tarih)}</td>
                   <td><span className={`badge ${h.yon === 'giris' ? 'bG' : 'bR'}`}>{h.yon === 'giris' ? 'Giriş' : 'Çıkış'}</span></td>

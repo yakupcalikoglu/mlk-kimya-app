@@ -1,14 +1,12 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
   const [y, m, d] = t.split('-')
   if (!y || !m || !d) return t
   return `${d}/${m}/${y}`
-}
-function fmtSayi(n: number) {
-  return new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 2 }).format(n || 0)
 }
 
 function fmt(n: number) {
@@ -43,6 +41,7 @@ export default function Fatura() {
   const [modal, setModal] = useState(false)
   const [yazdirFatura, setYazdirFatura] = useState<Fatura | null>(null)
   const [kaydediliyor, setKaydediliyor] = useState(false)
+  const [sira, setSira] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
 
   const [tarih, setTarih] = useState(today())
   const [faturaNo, setFaturaNo] = useState(yeniFaturaNo())
@@ -124,7 +123,7 @@ export default function Fatura() {
     yukle()
   }
 
-  const sirali = [...faturalar].sort((a, b) => b.tarih?.localeCompare(a.tarih))
+  const sirali = siraliVeri(faturalar, sira)
   const topGenel = faturalar.reduce((a, f) => a + Number(f.genel_toplam || 0), 0)
 
   return (
@@ -144,7 +143,15 @@ export default function Fatura() {
         <div className="tw">
           <table>
             <thead>
-              <tr><th>Fatura No</th><th>Tarih</th><th>Müşteri</th><th className="tr">Ara Toplam</th><th className="tr">KDV</th><th className="tr">Genel Toplam</th><th></th></tr>
+              <tr>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'fatura_no'))}>Fatura No{siraIkon(sira,'fatura_no')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tarih'))}>Tarih{siraIkon(sira,'tarih')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'musteri_ad'))}>Müşteri{siraIkon(sira,'musteri_ad')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'ara_toplam'))}>Ara Toplam{siraIkon(sira,'ara_toplam')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'kdv_toplam'))}>KDV{siraIkon(sira,'kdv_toplam')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'genel_toplam'))}>Genel Toplam{siraIkon(sira,'genel_toplam')}</th>
+                <th></th>
+              </tr>
             </thead>
             <tbody>
               {yukleniyor && <tr><td colSpan={7} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
@@ -297,7 +304,7 @@ function FaturaYazdirGorunumu({ fatura, onClose }: { fatura: Fatura; onClose: ()
                 return (
                   <tr key={k.id}>
                     <td>{k.urun}</td>
-                    <td className="tr">{fmtSayi(k.miktar)}</td>
+                    <td className="tr">{k.miktar}</td>
                     <td className="tr">₺{fmt(k.birim)}</td>
                     <td className="tr">%{k.kdv}</td>
                     <td className="tr">₺{fmt(satirToplam)}</td>

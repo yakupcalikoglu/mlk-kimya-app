@@ -1,14 +1,12 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
   const [y, m, d] = t.split('-')
   if (!y || !m || !d) return t
   return `${d}/${m}/${y}`
-}
-function fmtSayi(n: number) {
-  return new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 2 }).format(n || 0)
 }
 
 function fmt(n: number) {
@@ -22,6 +20,9 @@ export default function Raporlar() {
   const [yukleniyor, setYukleniyor] = useState(true)
   const [aktifRapor, setAktifRapor] = useState<'ozet'|'cari'|'kasa'|'uretim'>('ozet')
   const [donem, setDonem] = useState({ baslangic: '2026-01-01', bitis: new Date().toISOString().split('T')[0] })
+  const [siraCari, setSiraCari] = useState<SiraState>({ alan: 'ad', yon: 'asc' })
+  const [siraKasa, setSiraKasa] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
+  const [siraUretim, setSiraUretim] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
 
   useEffect(() => {
     async function yukle() {
@@ -67,6 +68,10 @@ export default function Raporlar() {
     const sonBak = c.hareketler?.length ? c.hareketler[c.hareketler.length-1].bakiye : 0
     return { id: c.id, ad: c.ad, satis, tahsilat, bidon, sonBak }
   }).filter(c => c.satis > 0 || c.tahsilat > 0)
+  const cariOzetlerSirali = siraliVeri(cariOzetler, siraCari)
+  const kasaSirali = siraliVeri(kasa.filter(h => donemFiltre(h.tarih)), siraKasa)
+  const uretimZengin = donemUretim.map(u => ({ ...u, _bidon: (u.bidonlar||[]).reduce((a:number,b:any)=>a+(b.adet||0),0) }))
+  const uretimSirali = siraliVeri(uretimZengin, siraUretim)
 
   if (yukleniyor) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--tx2)' }}>Yükleniyor...</div>
 
@@ -152,14 +157,20 @@ export default function Raporlar() {
         {aktifRapor === 'cari' && (
           <div className="tw">
             <table>
-              <thead><tr><th>Cari</th><th className="tr">Satış</th><th className="tr">Tahsilat</th><th className="tr">Bidon</th><th className="tr">Güncel Bakiye</th></tr></thead>
+              <thead><tr>
+                <th style={{cursor:'pointer'}} onClick={() => setSiraCari(s => siraTikla(s,'ad'))}>Cari{siraIkon(siraCari,'ad')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSiraCari(s => siraTikla(s,'satis'))}>Satış{siraIkon(siraCari,'satis')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSiraCari(s => siraTikla(s,'tahsilat'))}>Tahsilat{siraIkon(siraCari,'tahsilat')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSiraCari(s => siraTikla(s,'bidon'))}>Bidon{siraIkon(siraCari,'bidon')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSiraCari(s => siraTikla(s,'sonBak'))}>Güncel Bakiye{siraIkon(siraCari,'sonBak')}</th>
+              </tr></thead>
               <tbody>
-                {cariOzetler.map(c => (
+                {cariOzetlerSirali.map(c => (
                   <tr key={c.id}>
                     <td style={{ fontWeight: 500 }}>{c.ad}</td>
                     <td className="tr">₺{fmt(c.satis)}</td>
                     <td className="tr" style={{ color: 'var(--g)' }}>₺{fmt(c.tahsilat)}</td>
-                    <td className="tr">{fmtSayi(c.bidon)}</td>
+                    <td className="tr">{c.bidon}</td>
                     <td className="tr" style={{ fontWeight: 700, color: c.sonBak > 0 ? 'var(--r)' : c.sonBak < 0 ? 'var(--b)' : 'var(--tx2)' }}>
                       ₺{fmt(Math.abs(c.sonBak))}
                     </td>
@@ -173,9 +184,14 @@ export default function Raporlar() {
         {aktifRapor === 'kasa' && (
           <div className="tw">
             <table>
-              <thead><tr><th>Tarih</th><th>Yön</th><th>Açıklama</th><th className="tr">Tutar</th></tr></thead>
+              <thead><tr>
+                <th style={{cursor:'pointer'}} onClick={() => setSiraKasa(s => siraTikla(s,'tarih'))}>Tarih{siraIkon(siraKasa,'tarih')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSiraKasa(s => siraTikla(s,'yon'))}>Yön{siraIkon(siraKasa,'yon')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSiraKasa(s => siraTikla(s,'ad'))}>Açıklama{siraIkon(siraKasa,'ad')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSiraKasa(s => siraTikla(s,'tutar'))}>Tutar{siraIkon(siraKasa,'tutar')}</th>
+              </tr></thead>
               <tbody>
-                {kasa.filter(h => donemFiltre(h.tarih)).sort((a,b) => b.tarih?.localeCompare(a.tarih)).map(h => (
+                {kasaSirali.map(h => (
                   <tr key={h.id}>
                     <td className="tnw">{fmtTarih(h.tarih)}</td>
                     <td><span className={`badge ${h.yon==='giris'?'bG':'bR'}`}>{h.yon==='giris'?'Giriş':'Çıkış'}</span></td>
@@ -193,10 +209,17 @@ export default function Raporlar() {
         {aktifRapor === 'uretim' && (
           <div className="tw">
             <table>
-              <thead><tr><th>Lot</th><th>Ürün</th><th>Tarih</th><th className="tr">Bidon</th><th className="tr">Kg</th><th className="tr">Maliyet</th></tr></thead>
+              <thead><tr>
+                <th style={{cursor:'pointer'}} onClick={() => setSiraUretim(s => siraTikla(s,'lot'))}>Lot{siraIkon(siraUretim,'lot')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSiraUretim(s => siraTikla(s,'urun'))}>Ürün{siraIkon(siraUretim,'urun')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSiraUretim(s => siraTikla(s,'tarih'))}>Tarih{siraIkon(siraUretim,'tarih')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSiraUretim(s => siraTikla(s,'_bidon'))}>Bidon{siraIkon(siraUretim,'_bidon')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSiraUretim(s => siraTikla(s,'toplam_kg'))}>Kg{siraIkon(siraUretim,'toplam_kg')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSiraUretim(s => siraTikla(s,'maliyet'))}>Maliyet{siraIkon(siraUretim,'maliyet')}</th>
+              </tr></thead>
               <tbody>
-                {donemUretim.map(u => {
-                  const bidon = (u.bidonlar||[]).reduce((a:number,b:any)=>a+(b.adet||0),0)
+                {uretimSirali.map(u => {
+                  const bidon = u._bidon
                   return (
                     <tr key={u.id}>
                       <td style={{ fontWeight: 600, color: 'var(--b)' }}>{u.lot}</td>

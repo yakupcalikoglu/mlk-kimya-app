@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
@@ -20,6 +21,7 @@ export default function TumHareketler({ onCariSec }: { onCariSec?: (id: string) 
   const [filtreCari, setFiltreCari] = useState('')
   const [filtreBaslangic, setFiltreBaslangic] = useState('')
   const [filtreBitis, setFiltreBitis] = useState('')
+  const [sira, setSira] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
 
   useEffect(() => {
     async function yukle() {
@@ -61,8 +63,19 @@ export default function TumHareketler({ onCariSec }: { onCariSec?: (id: string) 
   const cariFiltre = filtrele(cariHareketler)
   const tumFiltre = filtrele([...kasaHareketler, ...cariHareketler])
 
-  const gosterilen = aktifSekme === 'kasa' ? kasaFiltre
+  const gosterilenOnce = aktifSekme === 'kasa' ? kasaFiltre
     : aktifSekme === 'cari' ? cariFiltre : tumFiltre
+
+  const gosterilenZengin = gosterilenOnce.map(h => {
+    const isKasa = h.kaynak === 'kasa'
+    const _tutar = isKasa ? h.tutar : (h.tur === 'tahsilat' ? h.tahsilat : h.tutar)
+    const _tur = isKasa
+      ? (h.yon === 'giris' ? 'Kasa Giriş' : 'Kasa Çıkış')
+      : (h.tur === 'satis' ? 'Satış' : h.tur === 'tahsilat' ? 'Tahsilat' : h.tur)
+    const _kaynakAd = isKasa ? 'Kasa' : (h.cariAd || '')
+    return { ...h, _tutar: _tutar || 0, _tur, _kaynakAd }
+  })
+  const gosterilen = siraliVeri(gosterilenZengin, sira)
 
   const kasaGelir = kasaFiltre.filter(h => h.yon === 'giris').reduce((a, h) => a + (h.tutar || 0), 0)
   const kasaGider = kasaFiltre.filter(h => h.yon === 'cikis').reduce((a, h) => a + (h.tutar || 0), 0)
@@ -127,19 +140,20 @@ export default function TumHareketler({ onCariSec }: { onCariSec?: (id: string) 
           <table>
             <thead>
               <tr>
-                <th>Tarih</th><th>Kaynak</th><th>Tür</th><th>Açıklama</th>
-                <th className="tr">Tutar</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tarih'))}>Tarih{siraIkon(sira,'tarih')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'_kaynakAd'))}>Kaynak{siraIkon(sira,'_kaynakAd')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'_tur'))}>Tür{siraIkon(sira,'_tur')}</th>
+                <th>Açıklama</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'_tutar'))}>Tutar{siraIkon(sira,'_tutar')}</th>
               </tr>
             </thead>
             <tbody>
               {yukleniyor && <tr><td colSpan={5} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
               {gosterilen.map((h, i) => {
                 const isKasa = h.kaynak === 'kasa'
-                const tutar = isKasa ? h.tutar : (h.tur === 'tahsilat' ? h.tahsilat : h.tutar)
+                const tutar = h._tutar
                 const pozitif = isKasa ? h.yon === 'giris' : h.tur === 'tahsilat'
-                const tur = isKasa
-                  ? (h.yon === 'giris' ? 'Kasa Giriş' : 'Kasa Çıkış')
-                  : (h.tur === 'satis' ? 'Satış' : h.tur === 'tahsilat' ? 'Tahsilat' : h.tur)
+                const tur = h._tur
 
                 return (
                   <tr key={i}>

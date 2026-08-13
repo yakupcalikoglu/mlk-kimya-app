@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
@@ -56,6 +57,9 @@ export default function SermayeModule() {
   const [ortakModal, setOrtakModal] = useState<{ open: boolean; data: Ortak | null }>({ open: false, data: null })
   const [odemeModal, setOdemeModal] = useState<{ open: boolean; data: Odeme | null }>({ open: false, data: null })
   const [iadeModal, setIadeModal] = useState<{ open: boolean; ortakId: number | null }>({ open: false, ortakId: null })
+  const [siraOrtak, setSiraOrtak] = useState<SiraState>({ alan: 'ad', yon: 'asc' })
+  const [siraOdeme, setSiraOdeme] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
+  const [siraIade, setSiraIade] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
 
   const yukle = useCallback(async () => {
     setYukleniyor(true)
@@ -83,8 +87,10 @@ export default function SermayeModule() {
     const iade = iadeler.filter(x => x.ortak_id === o.id).reduce((a, x) => a + Number(x.tutar || 0), 0)
     const fazla = Math.max(0, odendi - Number(o.hedef || 0))
     const net = odendi - iade
-    return { ...o, odendi, iade, fazla, net }
+    const kalan = Math.max(0, Number(o.hedef || 0) - odendi)
+    return { ...o, odendi, iade, fazla, net, kalan }
   })
+  const ortakOzetSirali = siraliVeri(ortakOzet, siraOrtak)
 
   // ─── Aksiyonlar ─────────────────────────────────────────
   async function ortakSil(id: number) {
@@ -153,15 +159,26 @@ export default function SermayeModule() {
         <div className="tw">
           <table>
             <thead>
-              <tr><th>#</th><th>Ortak</th><th className="tr">Pay%</th><th className="tr">Hedef</th><th className="tr">Ödenen</th><th className="tr">Kalan</th><th className="tr">Fazla Ödeme</th><th className="tr">İade/Mahsup</th><th className="tr">Net Bakiye</th><th></th></tr>
+              <tr>
+                <th>#</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSiraOrtak(s => siraTikla(s,'ad'))}>Ortak{siraIkon(siraOrtak,'ad')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSiraOrtak(s => siraTikla(s,'pay'))}>Pay%{siraIkon(siraOrtak,'pay')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSiraOrtak(s => siraTikla(s,'hedef'))}>Hedef{siraIkon(siraOrtak,'hedef')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSiraOrtak(s => siraTikla(s,'odendi'))}>Ödenen{siraIkon(siraOrtak,'odendi')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSiraOrtak(s => siraTikla(s,'kalan'))}>Kalan{siraIkon(siraOrtak,'kalan')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSiraOrtak(s => siraTikla(s,'fazla'))}>Fazla Ödeme{siraIkon(siraOrtak,'fazla')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSiraOrtak(s => siraTikla(s,'iade'))}>İade/Mahsup{siraIkon(siraOrtak,'iade')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSiraOrtak(s => siraTikla(s,'net'))}>Net Bakiye{siraIkon(siraOrtak,'net')}</th>
+                <th></th>
+              </tr>
             </thead>
             <tbody>
               {yukleniyor && <tr><td colSpan={10} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
               {!yukleniyor && ortakOzet.length === 0 && (
                 <tr><td colSpan={10} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Ortak eklenmemiş</td></tr>
               )}
-              {ortakOzet.map((o, i) => {
-                const kalan = Math.max(0, Number(o.hedef || 0) - o.odendi)
+              {ortakOzetSirali.map((o, i) => {
+                const kalan = o.kalan
                 return (
                   <tr key={o.id}>
                     <td>{i + 1}</td>
@@ -202,13 +219,22 @@ export default function SermayeModule() {
         <div className="tw">
           <table>
             <thead>
-              <tr><th>#</th><th>Tarih</th><th>Ortak</th><th>Açıklama</th><th>Tür</th><th className="tr">Tutar (₺)</th><th>Durum</th><th></th></tr>
+              <tr>
+                <th>#</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSiraOdeme(s => siraTikla(s,'tarih'))}>Tarih{siraIkon(siraOdeme,'tarih')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSiraOdeme(s => siraTikla(s,'ortak_ad'))}>Ortak{siraIkon(siraOdeme,'ortak_ad')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSiraOdeme(s => siraTikla(s,'aciklama'))}>Açıklama{siraIkon(siraOdeme,'aciklama')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSiraOdeme(s => siraTikla(s,'tur'))}>Tür{siraIkon(siraOdeme,'tur')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSiraOdeme(s => siraTikla(s,'tutar'))}>Tutar (₺){siraIkon(siraOdeme,'tutar')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSiraOdeme(s => siraTikla(s,'durum'))}>Durum{siraIkon(siraOdeme,'durum')}</th>
+                <th></th>
+              </tr>
             </thead>
             <tbody>
               {!yukleniyor && odemeler.length === 0 && (
                 <tr><td colSpan={8} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Sermaye ödeme kaydı yok</td></tr>
               )}
-              {[...odemeler].sort((a, b) => b.tarih?.localeCompare(a.tarih)).map((x, i) => (
+              {siraliVeri(odemeler, siraOdeme).map((x, i) => (
                 <tr key={x.id}>
                   <td>{i + 1}</td>
                   <td className="tnw">{fmtTarih(x.tarih)}</td>
@@ -241,13 +267,22 @@ export default function SermayeModule() {
         <div className="tw">
           <table>
             <thead>
-              <tr><th>#</th><th>Tarih</th><th>Ortak</th><th>Tür</th><th>Açıklama</th><th className="tr">Tutar (₺)</th><th>Kasaya Etki</th><th></th></tr>
+              <tr>
+                <th>#</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSiraIade(s => siraTikla(s,'tarih'))}>Tarih{siraIkon(siraIade,'tarih')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSiraIade(s => siraTikla(s,'ortak_ad'))}>Ortak{siraIkon(siraIade,'ortak_ad')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSiraIade(s => siraTikla(s,'tur'))}>Tür{siraIkon(siraIade,'tur')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSiraIade(s => siraTikla(s,'aciklama'))}>Açıklama{siraIkon(siraIade,'aciklama')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSiraIade(s => siraTikla(s,'tutar'))}>Tutar (₺){siraIkon(siraIade,'tutar')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSiraIade(s => siraTikla(s,'kasa_etki'))}>Kasaya Etki{siraIkon(siraIade,'kasa_etki')}</th>
+                <th></th>
+              </tr>
             </thead>
             <tbody>
               {!yukleniyor && iadeler.length === 0 && (
                 <tr><td colSpan={8} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>İade/mahsup kaydı yok</td></tr>
               )}
-              {[...iadeler].sort((a, b) => b.tarih?.localeCompare(a.tarih)).map((x, i) => (
+              {siraliVeri(iadeler, siraIade).map((x, i) => (
                 <tr key={x.id}>
                   <td>{i + 1}</td>
                   <td className="tnw">{fmtTarih(x.tarih)}</td>

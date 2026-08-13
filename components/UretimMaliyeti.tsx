@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
@@ -17,6 +18,7 @@ export default function UretimMaliyeti() {
   const [yukleniyor, setYukleniyor] = useState(true)
   const [modal, setModal] = useState(false)
   const [seciliId, setSeciliId] = useState<number|null>(null)
+  const [sira, setSira] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
 
   useEffect(() => {
     fetch('/api/uretim', { credentials: 'include' })
@@ -27,6 +29,13 @@ export default function UretimMaliyeti() {
   const topKg = uretimler.reduce((a, u) => a + (u.toplam_kg || 0), 0)
   const topBidon = uretimler.reduce((a, u) =>
     a + (u.bidonlar || []).reduce((b: number, x: any) => b + (x.adet || 0), 0), 0)
+
+  const uretimlerZengin = uretimler.map(u => {
+    const _bidon = (u.bidonlar||[]).reduce((a:number,b:any)=>a+(b.adet||0),0)
+    const _kgFiyat = u.toplam_kg > 0 ? u.maliyet / u.toplam_kg : 0
+    return { ...u, _bidon, _kgFiyat }
+  })
+  const uretimlerSirali = siraliVeri(uretimlerZengin, sira)
 
   const secili = uretimler.find(u => u.id === seciliId)
 
@@ -48,16 +57,21 @@ export default function UretimMaliyeti() {
           <table>
             <thead>
               <tr>
-                <th>Lot</th><th>Ürün</th><th>Tarih</th>
-                <th className="tr">Kg</th><th className="tr">Bidon</th>
-                <th className="tr">Maliyet</th><th className="tr">₺/kg</th><th></th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'lot'))}>Lot{siraIkon(sira,'lot')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'urun'))}>Ürün{siraIkon(sira,'urun')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tarih'))}>Tarih{siraIkon(sira,'tarih')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'toplam_kg'))}>Kg{siraIkon(sira,'toplam_kg')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'_bidon'))}>Bidon{siraIkon(sira,'_bidon')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'maliyet'))}>Maliyet{siraIkon(sira,'maliyet')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'_kgFiyat'))}>₺/kg{siraIkon(sira,'_kgFiyat')}</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
               {yukleniyor && <tr><td colSpan={8} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
-              {uretimler.map(u => {
-                const bidon = (u.bidonlar || []).reduce((a: number, b: any) => a + (b.adet || 0), 0)
-                const kgFiyat = u.toplam_kg > 0 ? u.maliyet / u.toplam_kg : 0
+              {uretimlerSirali.map(u => {
+                const bidon = u._bidon
+                const kgFiyat = u._kgFiyat
                 return (
                   <tr key={u.id}>
                     <td style={{ fontWeight: 600, color: 'var(--b)' }}>{u.lot}</td>

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
@@ -16,6 +17,7 @@ export default function UrunStogu() {
   const [uretimler, setUretimler] = useState<any[]>([])
   const [cariler, setCariler] = useState<any[]>([])
   const [yukleniyor, setYukleniyor] = useState(true)
+  const [sira, setSira] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
 
   useEffect(() => {
     async function yukle() {
@@ -50,6 +52,7 @@ export default function UrunStogu() {
     const kalan = topBidon - satilan
     return { ...u, topBidon, satilan, kalan }
   })
+  const stoklarSirali = siraliVeri(stoklar, sira)
 
   const topUretilen = stoklar.reduce((a, s) => a + s.topBidon, 0)
   const topSatilan = stoklar.reduce((a, s) => a + s.satilan, 0)
@@ -70,14 +73,18 @@ export default function UrunStogu() {
           <table>
             <thead>
               <tr>
-                <th>Lot</th><th>Ürün</th><th>Tarih</th>
-                <th className="tr">Üretilen</th><th className="tr">Satılan</th><th className="tr">Kalan</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'lot'))}>Lot{siraIkon(sira,'lot')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'urun'))}>Ürün{siraIkon(sira,'urun')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tarih'))}>Tarih{siraIkon(sira,'tarih')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'topBidon'))}>Üretilen{siraIkon(sira,'topBidon')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'satilan'))}>Satılan{siraIkon(sira,'satilan')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'kalan'))}>Kalan{siraIkon(sira,'kalan')}</th>
                 <th>Bidon Dağılımı</th><th>Durum</th>
               </tr>
             </thead>
             <tbody>
               {yukleniyor && <tr><td colSpan={8} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
-              {stoklar.map(s => {
+              {stoklarSirali.map(s => {
                 const durum = s.kalan <= 0 ? { yazi: 'Tükendi', renk: 'var(--r)', bg: 'var(--rbg)' }
                   : s.kalan < 10 ? { yazi: 'Az Kaldı', renk: 'var(--a)', bg: 'var(--abg)' }
                   : { yazi: 'Stokta', renk: 'var(--g)', bg: 'var(--gbg)' }

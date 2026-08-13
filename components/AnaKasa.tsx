@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n || 0)
@@ -20,6 +21,9 @@ interface AnaKasaVerisi {
 export default function AnaKasa({ onCariSec }: { onCariSec?: (id: string) => void }) {
   const [veri, setVeri] = useState<AnaKasaVerisi | null>(null)
   const [yukleniyor, setYukleniyor] = useState(true)
+  const [siraGelir, setSiraGelir] = useState<SiraState>({ alan: null, yon: 'desc' })
+  const [siraGider, setSiraGider] = useState<SiraState>({ alan: null, yon: 'desc' })
+  const [siraCari, setSiraCari] = useState<SiraState>({ alan: 'bakiye', yon: 'desc' })
 
   useEffect(() => {
     fetch('/api/ana-kasa', { credentials: 'include' })
@@ -55,9 +59,13 @@ export default function AnaKasa({ onCariSec }: { onCariSec?: (id: string) => voi
           <div className="ch">📥 Gelir Kalemleri (Özet)</div>
           <div className="tw">
             <table>
-              <thead><tr><th>Kaynak</th><th className="tr">Tutar (₺)</th><th className="tr">%</th></tr></thead>
+              <thead><tr>
+                <th style={{cursor:'pointer'}} onClick={() => setSiraGelir(s => siraTikla(s,'ad'))}>Kaynak{siraIkon(siraGelir,'ad')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSiraGelir(s => siraTikla(s,'tutar'))}>Tutar (₺){siraIkon(siraGelir,'tutar')}</th>
+                <th className="tr">%</th>
+              </tr></thead>
               <tbody>
-                {gelirKalemleri.filter(x => x.tutar > 0).map(x => (
+                {siraliVeri(gelirKalemleri.filter(x => x.tutar > 0), siraGelir).map(x => (
                   <tr key={x.ad}>
                     <td>{x.ad}</td>
                     <td className="tr" style={{ fontWeight: 600, color: 'var(--g)' }}>₺{fmt(x.tutar)}</td>
@@ -78,9 +86,13 @@ export default function AnaKasa({ onCariSec }: { onCariSec?: (id: string) => voi
           <div className="ch">📤 Gider Kalemleri (Özet)</div>
           <div className="tw">
             <table>
-              <thead><tr><th>Kaynak</th><th className="tr">Tutar (₺)</th><th className="tr">%</th></tr></thead>
+              <thead><tr>
+                <th style={{cursor:'pointer'}} onClick={() => setSiraGider(s => siraTikla(s,'ad'))}>Kaynak{siraIkon(siraGider,'ad')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSiraGider(s => siraTikla(s,'tutar'))}>Tutar (₺){siraIkon(siraGider,'tutar')}</th>
+                <th className="tr">%</th>
+              </tr></thead>
               <tbody>
-                {giderKalemleri.filter(x => x.tutar > 0).map(x => (
+                {siraliVeri(giderKalemleri.filter(x => x.tutar > 0), siraGider).map(x => (
                   <tr key={x.ad}>
                     <td>{x.ad}</td>
                     <td className="tr" style={{ fontWeight: 600, color: 'var(--r)' }}>₺{fmt(x.tutar)}</td>
@@ -102,12 +114,16 @@ export default function AnaKasa({ onCariSec }: { onCariSec?: (id: string) => voi
         <div className="ch">📋 Tahsil Edilmemiş Alacaklar</div>
         <div className="tw">
           <table>
-            <thead><tr><th>Müşteri/Cari</th><th className="tr">Alacak (₺)</th><th>Durum</th></tr></thead>
+            <thead><tr>
+                <th style={{cursor:'pointer'}} onClick={() => setSiraCari(s => siraTikla(s,'ad'))}>Müşteri/Cari{siraIkon(siraCari,'ad')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSiraCari(s => siraTikla(s,'bakiye'))}>Alacak (₺){siraIkon(siraCari,'bakiye')}</th>
+                <th>Durum</th>
+              </tr></thead>
             <tbody>
               {acikCariler.length === 0 && sermayeBekleyen === 0 && (
                 <tr><td colSpan={3} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Tüm alacaklar tahsil edilmiş ✅</td></tr>
               )}
-              {acikCariler.map(c => (
+              {siraliVeri(acikCariler, siraCari).map(c => (
                 <tr key={c.id} style={{ cursor: onCariSec ? 'pointer' : 'default' }} onClick={() => onCariSec?.(c.id)}>
                   <td style={{ color: 'var(--b)', textDecoration: onCariSec ? 'underline dotted' : 'none' }}>{c.ad}</td>
                   <td className="tr" style={{ fontWeight: 600, color: 'var(--r)' }}>₺{fmt(c.bakiye)}</td>

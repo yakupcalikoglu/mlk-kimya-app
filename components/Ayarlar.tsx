@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 export default function Ayarlar() {
   const [kullanicilar, setKullanicilar] = useState<any[]>([])
@@ -7,6 +8,7 @@ export default function Ayarlar() {
   const [form, setForm] = useState<any>({})
   const [kaydediliyor, setKaydediliyor] = useState(false)
   const [mesaj, setMesaj] = useState('')
+  const [sira, setSira] = useState<SiraState>({ alan: 'name', yon: 'asc' })
 
   async function yukle() {
     const res = await fetch('/api/kullanicilar', { credentials: 'include' })
@@ -74,10 +76,16 @@ export default function Ayarlar() {
         <div className="tw">
           <table>
             <thead>
-              <tr><th>Ad</th><th>Kullanıcı Adı</th><th>Rol</th><th>Durum</th><th></th></tr>
+              <tr>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'name'))}>Ad{siraIkon(sira,'name')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'username'))}>Kullanıcı Adı{siraIkon(sira,'username')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'role'))}>Rol{siraIkon(sira,'role')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'aktif'))}>Durum{siraIkon(sira,'aktif')}</th>
+                <th></th>
+              </tr>
             </thead>
             <tbody>
-              {kullanicilar.map(u => (
+              {siraliVeri(kullanicilar, sira).map(u => (
                 <tr key={u.id}>
                   <td style={{ fontWeight: 500 }}>{u.name}</td>
                   <td style={{ color: 'var(--tx2)', fontFamily: 'monospace' }}>{u.username}</td>

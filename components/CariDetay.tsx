@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
@@ -22,6 +23,7 @@ export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: 
   const [form, setForm] = useState<any>({})
   const [duzenlenenId, setDuzenlenenId] = useState<number|null>(null)
   const [kaydediliyor, setKaydediliyor] = useState(false)
+  const [sira, setSira] = useState<SiraState>({ alan: null, yon: 'desc' })
 
   async function yukle() {
     const res = await fetch(`/api/cariler/${cariId}`, { credentials: 'include' })
@@ -168,14 +170,19 @@ export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: 
           <table>
             <thead>
               <tr>
-                <th>Tarih</th><th>Tür</th><th>Fatura</th>
-                <th className="tr">Adet</th><th className="tr">Birim</th>
-                <th className="tr">Tutar</th><th className="tr">Tahsilat</th>
-                <th className="tr">Bakiye</th><th>Açıklama</th><th></th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tarih'))}>Tarih{siraIkon(sira,'tarih')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tur'))}>Tür{siraIkon(sira,'tur')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'fatno'))}>Fatura{siraIkon(sira,'fatno')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'adet'))}>Adet{siraIkon(sira,'adet')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'birim'))}>Birim{siraIkon(sira,'birim')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tutar'))}>Tutar{siraIkon(sira,'tutar')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tahsilat'))}>Tahsilat{siraIkon(sira,'tahsilat')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'bakiye'))}>Bakiye{siraIkon(sira,'bakiye')}</th>
+                <th>Açıklama</th><th></th>
               </tr>
             </thead>
             <tbody>
-              {(cari.hareketler || []).slice().reverse().map((h:any) => (
+              {siraliVeri((cari.hareketler || []).slice().reverse(), sira).map((h:any) => (
                 <tr key={h.id}>
                   <td className="tnw">{fmtTarih(h.tarih)}</td>
                   <td>

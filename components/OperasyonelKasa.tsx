@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
@@ -20,6 +21,7 @@ export default function OperasyonelKasa() {
   const [modal, setModal] = useState<'tahsilat'|'odeme'|null>(null)
   const [form, setForm] = useState<any>({})
   const [kaydediliyor, setKaydediliyor] = useState(false)
+  const [sira, setSira] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
 
   async function yukle() {
     const [kRes, cRes] = await Promise.all([
@@ -88,7 +90,7 @@ export default function OperasyonelKasa() {
     await yukle()
   }
 
-  const tumHar = [...hareketler].sort((a, b) => b.tarih?.localeCompare(a.tarih))
+  const tumHar = siraliVeri(hareketler, sira)
 
   return (
     <div>
@@ -120,7 +122,13 @@ export default function OperasyonelKasa() {
         <div className="tw">
           <table>
             <thead>
-              <tr><th>Tarih</th><th>Yön</th><th>Açıklama</th><th className="tr">Tutar</th><th></th></tr>
+              <tr>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tarih'))}>Tarih{siraIkon(sira,'tarih')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'yon'))}>Yön{siraIkon(sira,'yon')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'ad'))}>Açıklama{siraIkon(sira,'ad')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tutar'))}>Tutar{siraIkon(sira,'tutar')}</th>
+                <th></th>
+              </tr>
             </thead>
             <tbody>
               {yukleniyor && <tr><td colSpan={5} style={{textAlign:'center',padding:20,color:'var(--tx2)'}}>Yükleniyor...</td></tr>}

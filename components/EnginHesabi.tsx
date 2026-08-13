@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
@@ -20,6 +21,7 @@ export default function EnginHesabi() {
   const [modal, setModal] = useState<'harcama'|'tahsilat'|null>(null)
   const [form, setForm] = useState<any>({ tarih: today() })
   const [kaydediliyor, setKaydediliyor] = useState(false)
+  const [sira, setSira] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
 
   async function yukle() {
     const [hRes, tRes] = await Promise.all([
@@ -62,7 +64,8 @@ export default function EnginHesabi() {
   const tumHar = [
     ...harcamalar.map(h => ({ ...h, tip: 'harcama' })),
     ...tahsilatlar.map(t => ({ ...t, tip: 'tahsilat' }))
-  ].sort((a, b) => b.tarih?.localeCompare(a.tarih))
+  ]
+  const tumHarSirali = siraliVeri(tumHar, sira)
 
   return (
     <div>
@@ -85,10 +88,16 @@ export default function EnginHesabi() {
         </div>
         <div className="tw">
           <table>
-            <thead><tr><th>Tarih</th><th>Tür</th><th>Açıklama</th><th className="tr">Tutar</th><th></th></tr></thead>
+            <thead><tr>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tarih'))}>Tarih{siraIkon(sira,'tarih')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tip'))}>Tür{siraIkon(sira,'tip')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'ad'))}>Açıklama{siraIkon(sira,'ad')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tutar'))}>Tutar{siraIkon(sira,'tutar')}</th>
+                <th></th>
+              </tr></thead>
             <tbody>
               {yukleniyor && <tr><td colSpan={5} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
-              {tumHar.map(h => (
+              {tumHarSirali.map(h => (
                 <tr key={`${h.tip}-${h.id}`}>
                   <td className="tnw">{fmtTarih(h.tarih)}</td>
                   <td><span className={`badge ${h.tip === 'tahsilat' ? 'bG' : 'bR'}`}>{h.tip === 'tahsilat' ? 'Tahsilat' : 'Harcama'}</span></td>
@@ -99,7 +108,7 @@ export default function EnginHesabi() {
                   <td><button className="btn xs dn" onClick={() => sil(h.id, h.tip)}>🗑</button></td>
                 </tr>
               ))}
-              {!yukleniyor && !tumHar.length && <tr><td colSpan={5} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Hareket yok</td></tr>}
+              {!yukleniyor && !tumHarSirali.length && <tr><td colSpan={5} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Hareket yok</td></tr>}
             </tbody>
           </table>
         </div>

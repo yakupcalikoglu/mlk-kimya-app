@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(n)
@@ -11,6 +12,7 @@ export default function HammaddeStogu() {
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState<any>({})
   const [kaydediliyor, setKaydediliyor] = useState(false)
+  const [sira, setSira] = useState<SiraState>({ alan: 'ad', yon: 'asc' })
 
   async function yukle() {
     const res = await fetch('/api/hammadde', { credentials: 'include' })
@@ -79,11 +81,17 @@ export default function HammaddeStogu() {
         <div className="tw">
           <table>
             <thead>
-              <tr><th>Hammadde</th><th>Birim</th><th className="tr">Stok</th><th className="tr">Birim Fiyat</th><th>Durum</th><th></th></tr>
+              <tr>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'ad'))}>Hammadde{siraIkon(sira,'ad')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'birim'))}>Birim{siraIkon(sira,'birim')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'guncel_stok'))}>Stok{siraIkon(sira,'guncel_stok')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'birim_fiyat'))}>Birim Fiyat{siraIkon(sira,'birim_fiyat')}</th>
+                <th>Durum</th><th></th>
+              </tr>
             </thead>
             <tbody>
               {yukleniyor && <tr><td colSpan={6} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
-              {hammaddeler.map(h => {
+              {siraliVeri(hammaddeler, sira).map(h => {
                 const stok = h.guncel_stok || 0
                 const durum = stok <= 0 ? { renk: 'var(--r)', yazi: 'Tükendi', bg: 'var(--rbg)' }
                   : stok < 100 ? { renk: 'var(--a)', yazi: 'Az', bg: 'var(--abg)' }

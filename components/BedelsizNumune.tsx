@@ -1,14 +1,12 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
   const [y, m, d] = t.split('-')
   if (!y || !m || !d) return t
   return `${d}/${m}/${y}`
-}
-function fmtSayi(n: number) {
-  return new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 2 }).format(n || 0)
 }
 
 function fmt(n: number) {
@@ -22,6 +20,7 @@ export default function BedelsizNumune() {
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState<any>({ tarih: today(), borcaDus: true })
   const [kaydediliyor, setKaydediliyor] = useState(false)
+  const [sira, setSira] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
 
   async function yukle() {
     const res = await fetch('/api/cariler', { credentials: 'include' })
@@ -36,7 +35,8 @@ export default function BedelsizNumune() {
     (c.hareketler || [])
       .filter((h: any) => h.tur === 'bedelsiz_ver')
       .map((h: any) => ({ ...h, cariAd: c.ad, cariId: c.id }))
-  ).sort((a, b) => b.tarih?.localeCompare(a.tarih))
+  )
+  const bedelsizlerSirali = siraliVeri(bedelsizler, sira)
 
   const topAdet = bedelsizler.reduce((a, b) => a + (b.adet || 0), 0)
   const topTutar = bedelsizler.reduce((a, b) => a + (b.tahsilat || 0), 0)
@@ -132,18 +132,21 @@ export default function BedelsizNumune() {
           <table>
             <thead>
               <tr>
-                <th>Tarih</th><th>Cari</th><th className="tr">Adet</th>
-                <th className="tr">Birim ₺</th><th className="tr">Değer</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tarih'))}>Tarih{siraIkon(sira,'tarih')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'cariAd'))}>Cari{siraIkon(sira,'cariAd')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'adet'))}>Adet{siraIkon(sira,'adet')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'birim'))}>Birim ₺{siraIkon(sira,'birim')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tahsilat'))}>Değer{siraIkon(sira,'tahsilat')}</th>
                 <th>Borçtan Düşme</th><th>Açıklama</th><th></th>
               </tr>
             </thead>
             <tbody>
               {yukleniyor && <tr><td colSpan={8} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
-              {bedelsizler.map((b, i) => (
+              {bedelsizlerSirali.map((b, i) => (
                 <tr key={i}>
                   <td className="tnw">{fmtTarih(b.tarih)}</td>
                   <td style={{ fontWeight: 500 }}>{b.cariAd}</td>
-                  <td className="tr">{fmtSayi(b.adet)}</td>
+                  <td className="tr">{b.adet}</td>
                   <td className="tr">₺{fmt(b.birim || 0)}</td>
                   <td className="tr" style={{ color: 'var(--r)', fontWeight: 600 }}>₺{fmt(b.tahsilat || 0)}</td>
                   <td>

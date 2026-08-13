@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)
@@ -19,6 +20,7 @@ export default function OzetDashboard({ onCariSec }: { onCariSec?: (id: string) 
   const [cariler, setCariler] = useState<any[]>([])
   const [kasa, setKasa] = useState<any[]>([])
   const [yukleniyor, setYukleniyor] = useState(true)
+  const [sira, setSira] = useState<SiraState>({ alan: 'ad', yon: 'asc' })
 
   useEffect(() => {
     async function yukle() {
@@ -81,20 +83,23 @@ export default function OzetDashboard({ onCariSec }: { onCariSec?: (id: string) 
             <table>
               <thead>
                 <tr>
-                  <th>Cari</th>
-                  <th className="tr">Satış</th>
-                  <th className="tr">Tahsilat</th>
-                  <th className="tr">Bakiye</th>
+                  <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'ad'))}>Cari{siraIkon(sira,'ad')}</th>
+                  <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'_satis'))}>Satış{siraIkon(sira,'_satis')}</th>
+                  <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'_tahsilat'))}>Tahsilat{siraIkon(sira,'_tahsilat')}</th>
+                  <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'_bakiye'))}>Bakiye{siraIkon(sira,'_bakiye')}</th>
                 </tr>
               </thead>
               <tbody>
-                {cariler.map(c => {
+                {siraliVeri(cariler.map(c => {
                   let cSatis = 0, cTah = 0
                   ;(c.hareketler || []).forEach((h: any) => {
                     if (h.tur === 'satis') cSatis += h.tutar || 0
                     if (h.tur === 'tahsilat') cTah += h.tahsilat || 0
                   })
-                  const bak = cariSonBakiye(c)
+                  return { ...c, _satis: cSatis, _tahsilat: cTah, _bakiye: cariSonBakiye(c) }
+                }), sira).map(c => {
+                  const cSatis = c._satis, cTah = c._tahsilat
+                  const bak = c._bakiye
                   return (
                     <tr key={c.id} style={{cursor:'pointer'}} onClick={() => onCariSec?.(c.id)}>
                       <td style={{ fontWeight: 500 }}>{c.ad}</td>

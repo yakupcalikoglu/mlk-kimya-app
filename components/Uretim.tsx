@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
@@ -19,6 +20,7 @@ export default function Uretim() {
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState<any>({ tarih: today(), bidonlar: [{ boy: 20, adet: 0 }] })
   const [kaydediliyor, setKaydediliyor] = useState(false)
+  const [sira, setSira] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
 
   async function yukle() {
     const res = await fetch('/api/uretim', { credentials: 'include' })
@@ -99,12 +101,20 @@ export default function Uretim() {
         <div className="tw">
           <table>
             <thead>
-              <tr><th>Lot</th><th>Tarih</th><th>Ürün</th><th className="tr">Bidon</th><th className="tr">Kg</th><th className="tr">Maliyet</th><th></th></tr>
+              <tr>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'lot'))}>Lot{siraIkon(sira,'lot')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tarih'))}>Tarih{siraIkon(sira,'tarih')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'urun'))}>Ürün{siraIkon(sira,'urun')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'_bidonTop'))}>Bidon{siraIkon(sira,'_bidonTop')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'toplam_kg'))}>Kg{siraIkon(sira,'toplam_kg')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'maliyet'))}>Maliyet{siraIkon(sira,'maliyet')}</th>
+                <th></th>
+              </tr>
             </thead>
             <tbody>
               {yukleniyor && <tr><td colSpan={7} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
-              {uretimler.map(u => {
-                const bidonTop = (u.bidonlar || []).reduce((a: number, b: any) => a + (b.adet || 0), 0)
+              {siraliVeri(uretimler.map(u => ({ ...u, _bidonTop: (u.bidonlar||[]).reduce((a:number,b:any)=>a+(b.adet||0),0) })), sira).map(u => {
+                const bidonTop = u._bidonTop
                 const bidonDetay = (u.bidonlar || []).map((b: any) => `${b.adet}×${b.boy}lt`).join(', ')
                 return (
                   <tr key={u.id}>
