@@ -7,6 +7,9 @@ function fmtTarih(t: string) {
   if (!y || !m || !d) return t
   return `${d}/${m}/${y}`
 }
+function fmtSayi(n: number) {
+  return new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 2 }).format(n || 0)
+}
 
 function fmt(n: number) {
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(n)
@@ -140,7 +143,7 @@ export default function BedelsizNumune() {
                 <tr key={i}>
                   <td className="tnw">{fmtTarih(b.tarih)}</td>
                   <td style={{ fontWeight: 500 }}>{b.cariAd}</td>
-                  <td className="tr">{b.adet}</td>
+                  <td className="tr">{fmtSayi(b.adet)}</td>
                   <td className="tr">₺{fmt(b.birim || 0)}</td>
                   <td className="tr" style={{ color: 'var(--r)', fontWeight: 600 }}>₺{fmt(b.tahsilat || 0)}</td>
                   <td>

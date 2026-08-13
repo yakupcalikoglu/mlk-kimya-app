@@ -7,6 +7,9 @@ function fmtTarih(t: string) {
   if (!y || !m || !d) return t
   return `${d}/${m}/${y}`
 }
+function fmtSayi(n: number) {
+  return new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 2 }).format(n || 0)
+}
 
 function fmt(n: number) {
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(n)
@@ -156,7 +159,7 @@ export default function Raporlar() {
                     <td style={{ fontWeight: 500 }}>{c.ad}</td>
                     <td className="tr">₺{fmt(c.satis)}</td>
                     <td className="tr" style={{ color: 'var(--g)' }}>₺{fmt(c.tahsilat)}</td>
-                    <td className="tr">{c.bidon}</td>
+                    <td className="tr">{fmtSayi(c.bidon)}</td>
                     <td className="tr" style={{ fontWeight: 700, color: c.sonBak > 0 ? 'var(--r)' : c.sonBak < 0 ? 'var(--b)' : 'var(--tx2)' }}>
                       ₺{fmt(Math.abs(c.sonBak))}
                     </td>

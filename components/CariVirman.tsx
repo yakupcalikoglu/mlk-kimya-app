@@ -7,6 +7,9 @@ function fmtTarih(t: string) {
   if (!y || !m || !d) return t
   return `${d}/${m}/${y}`
 }
+function fmtSayi(n: number) {
+  return new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 2 }).format(n || 0)
+}
 
 function fmt(n: number) {
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(n)
@@ -158,7 +161,7 @@ export default function CariVirman() {
                   <td className="tnw">{fmtTarih(v.tarih)}</td>
                   <td style={{ color: 'var(--r)', fontWeight: 500 }}>{cariAd(v.kaynak_id)}</td>
                   <td style={{ color: 'var(--g)', fontWeight: 500 }}>{cariAd(v.hedef_id)}</td>
-                  <td className="tr">{v.adet}</td>
+                  <td className="tr">{fmtSayi(v.adet)}</td>
                   <td className="tr">₺{fmt(v.birim_fiyat)}</td>
                   <td className="tr" style={{ fontWeight: 700 }}>₺{fmt(v.tutar)}</td>
                   <td style={{ fontSize: 11, color: 'var(--tx2)' }}>{v.acik || '—'}</td>

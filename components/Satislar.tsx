@@ -7,6 +7,9 @@ function fmtTarih(t: string) {
   if (!y || !m || !d) return t
   return `${d}/${m}/${y}`
 }
+function fmtSayi(n: number) {
+  return new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 2 }).format(n || 0)
+}
 
 function fmt(n: number) {
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(n)
@@ -152,7 +155,7 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
                     </span>
                   </td>
                   <td>{s.fatno || '—'}</td>
-                  <td className="tr">{s.adet}</td>
+                  <td className="tr">{fmtSayi(s.adet)}</td>
                   <td className="tr">₺{fmt(s.birim)}</td>
                   <td className="tr" style={{ fontWeight: 700, color: 'var(--r)' }}>₺{fmt(s.tutar)}</td>
                   <td style={{ fontSize: 11, color: 'var(--tx2)' }}>{s.acik || '—'}</td>

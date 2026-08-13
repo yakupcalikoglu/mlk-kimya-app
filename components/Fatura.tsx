@@ -7,6 +7,9 @@ function fmtTarih(t: string) {
   if (!y || !m || !d) return t
   return `${d}/${m}/${y}`
 }
+function fmtSayi(n: number) {
+  return new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 2 }).format(n || 0)
+}
 
 function fmt(n: number) {
   return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n || 0)
@@ -294,7 +297,7 @@ function FaturaYazdirGorunumu({ fatura, onClose }: { fatura: Fatura; onClose: ()
                 return (
                   <tr key={k.id}>
                     <td>{k.urun}</td>
-                    <td className="tr">{k.miktar}</td>
+                    <td className="tr">{fmtSayi(k.miktar)}</td>
                     <td className="tr">₺{fmt(k.birim)}</td>
                     <td className="tr">%{k.kdv}</td>
                     <td className="tr">₺{fmt(satirToplam)}</td>
