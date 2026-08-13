@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
@@ -23,6 +24,7 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
   const [form, setForm] = useState<any>({ tarih: today() })
   const [kaydediliyor, setKaydediliyor] = useState(false)
   const [filtreCari, setFiltreCari] = useState('')
+  const [sira, setSira] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
 
   async function yukle() {
     const res = await fetch('/api/cariler', { credentials: 'include' })
@@ -37,11 +39,12 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
     (c.hareketler || [])
       .filter((h: any) => h.tur === 'satis')
       .map((h: any) => ({ ...h, cariAd: c.ad, cariId: c.id }))
-  ).sort((a, b) => b.tarih?.localeCompare(a.tarih))
+  )
 
-  const filtrelendi = filtreCari
+  const filtrelendiOnce = filtreCari
     ? tumSatislar.filter(s => s.cariId === filtreCari)
     : tumSatislar
+  const filtrelendi = siraliVeri(filtrelendiOnce, sira)
 
   const topSatis = filtrelendi.reduce((a, s) => a + (s.tutar || 0), 0)
   const topBidon = filtrelendi.reduce((a, s) => a + (s.adet || 0), 0)
@@ -138,9 +141,13 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
           <table>
             <thead>
               <tr>
-                <th>Tarih</th><th>Cari</th><th>Fatura No</th>
-                <th className="tr">Adet</th><th className="tr">Birim ₺</th>
-                <th className="tr">Tutar</th><th>Açıklama</th><th></th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tarih'))}>Tarih{siraIkon(sira,'tarih')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'cariAd'))}>Cari{siraIkon(sira,'cariAd')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'fatno'))}>Fatura No{siraIkon(sira,'fatno')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'adet'))}>Adet{siraIkon(sira,'adet')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'birim'))}>Birim ₺{siraIkon(sira,'birim')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tutar'))}>Tutar{siraIkon(sira,'tutar')}</th>
+                <th>Açıklama</th><th></th>
               </tr>
             </thead>
             <tbody>

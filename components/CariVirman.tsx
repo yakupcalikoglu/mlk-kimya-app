@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 function fmtTarih(t: string) {
   if (!t) return '—'
@@ -23,6 +24,7 @@ export default function CariVirman() {
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState<any>({ tarih: today() })
   const [kaydediliyor, setKaydediliyor] = useState(false)
+  const [sira, setSira] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
 
   async function yukle() {
     const [cRes, vRes] = await Promise.all([
@@ -152,11 +154,19 @@ export default function CariVirman() {
         <div className="tw">
           <table>
             <thead>
-              <tr><th>Tarih</th><th>Kaynak</th><th>Hedef</th><th className="tr">Adet</th><th className="tr">Birim</th><th className="tr">Tutar</th><th>Not</th><th></th></tr>
+              <tr>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tarih'))}>Tarih{siraIkon(sira,'tarih')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'kaynak_id'))}>Kaynak{siraIkon(sira,'kaynak_id')}</th>
+                <th style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'hedef_id'))}>Hedef{siraIkon(sira,'hedef_id')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'adet'))}>Adet{siraIkon(sira,'adet')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'birim_fiyat'))}>Birim{siraIkon(sira,'birim_fiyat')}</th>
+                <th className="tr" style={{cursor:'pointer'}} onClick={() => setSira(s => siraTikla(s,'tutar'))}>Tutar{siraIkon(sira,'tutar')}</th>
+                <th>Not</th><th></th>
+              </tr>
             </thead>
             <tbody>
               {yukleniyor && <tr><td colSpan={8} style={{ textAlign: 'center', padding: 20, color: 'var(--tx2)' }}>Yükleniyor...</td></tr>}
-              {[...virmanlar].sort((a,b) => b.tarih?.localeCompare(a.tarih)).map(v => (
+              {siraliVeri(virmanlar, sira).map(v => (
                 <tr key={v.id}>
                   <td className="tnw">{fmtTarih(v.tarih)}</td>
                   <td style={{ color: 'var(--r)', fontWeight: 500 }}>{cariAd(v.kaynak_id)}</td>
