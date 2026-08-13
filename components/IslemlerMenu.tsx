@@ -1,16 +1,6 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 
-// Tablo satırlarındaki "✏️ Düzenle / 🗑 Sil" gibi butonları her zaman açık
-// göstermek yerine, "⋮" ikonuna tıklayınca açılan bir menüde toplar.
-// Bu, yanlışlıkla sil butonuna tıklamayı büyük ölçüde engeller.
-//
-// Kullanım:
-//   <IslemlerMenu>
-//     <IslemlerMenu.Item onClick={() => setModal(true)} ikon="✏️">Düzenle</IslemlerMenu.Item>
-//     <IslemlerMenu.Item onClick={() => sil(x.id)} ikon="🗑" tehlikeli>Sil</IslemlerMenu.Item>
-//   </IslemlerMenu>
-
 interface ItemProps {
   onClick: () => void
   ikon?: string
@@ -23,15 +13,15 @@ function Item({ onClick, ikon, tehlikeli, children }: ItemProps) {
     <button
       onClick={onClick}
       style={{
-        display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-        padding: '8px 12px', border: 'none', background: 'none', cursor: 'pointer',
-        fontSize: 12.5, textAlign: 'left', borderRadius: 6,
+        display: 'flex', alignItems: 'center', gap: 9, width: '100%',
+        padding: '9px 13px', border: 'none', background: 'none', cursor: 'pointer',
+        fontSize: 13, textAlign: 'left', borderRadius: 6, whiteSpace: 'nowrap',
         color: tehlikeli ? 'var(--r)' : 'var(--tx)',
       }}
       onMouseEnter={e => (e.currentTarget.style.background = tehlikeli ? 'var(--rbg)' : 'var(--surf2)')}
       onMouseLeave={e => (e.currentTarget.style.background = 'none')}
     >
-      {ikon && <span style={{ fontSize: 13 }}>{ikon}</span>}
+      {ikon && <span style={{ fontSize: 14 }}>{ikon}</span>}
       {children}
     </button>
   )
@@ -39,42 +29,71 @@ function Item({ onClick, ikon, tehlikeli, children }: ItemProps) {
 
 export default function IslemlerMenu({ children }: { children: React.ReactNode }) {
   const [acik, setAcik] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [konum, setKonum] = useState<{ top: number; left: number } | null>(null)
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function disaTikla(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setAcik(false)
+      if (
+        menuRef.current && !menuRef.current.contains(e.target as Node) &&
+        btnRef.current && !btnRef.current.contains(e.target as Node)
+      ) setAcik(false)
     }
-    if (acik) document.addEventListener('mousedown', disaTikla)
-    return () => document.removeEventListener('mousedown', disaTikla)
+    function kapatKaydirma() { setAcik(false) }
+    if (acik) {
+      document.addEventListener('mousedown', disaTikla)
+      window.addEventListener('scroll', kapatKaydirma, true)
+    }
+    return () => {
+      document.removeEventListener('mousedown', disaTikla)
+      window.removeEventListener('scroll', kapatKaydirma, true)
+    }
   }, [acik])
 
+  function ac() {
+    if (btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect()
+      const genislikTahmini = 180
+      const solaAc = r.right + genislikTahmini > window.innerWidth
+      setKonum({
+        top: r.bottom + 4,
+        left: solaAc ? r.right - genislikTahmini : r.left,
+      })
+    }
+    setAcik(v => !v)
+  }
+
   return (
-    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
+    <>
       <button
-        onClick={() => setAcik(v => !v)}
+        ref={btnRef}
+        onClick={ac}
         title="İşlemler"
         style={{
-          width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          border: '1px solid transparent', background: acik ? 'var(--surf2)' : 'none',
-          borderRadius: 6, cursor: 'pointer', fontSize: 15, color: 'var(--tx2)', lineHeight: 1,
+          width: 30, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          border: '1px solid ' + (acik ? 'var(--acc)' : 'var(--bdr)'),
+          background: acik ? 'var(--surf2)' : 'var(--surf)',
+          borderRadius: 6, cursor: 'pointer', fontSize: 18, color: 'var(--tx)', lineHeight: 1,
+          fontWeight: 900, letterSpacing: '1px',
         }}
       >
-        ⋮
+        •••
       </button>
-      {acik && (
+      {acik && konum && (
         <div
+          ref={menuRef}
           style={{
-            position: 'absolute', right: 0, top: '110%', zIndex: 50,
+            position: 'fixed', top: konum.top, left: konum.left, zIndex: 1000,
             background: 'var(--surf)', border: '1px solid var(--bdr)', borderRadius: 8,
-            boxShadow: 'var(--shm)', minWidth: 140, padding: 4,
+            boxShadow: 'var(--shm)', minWidth: 180, padding: 5,
           }}
           onClick={() => setAcik(false)}
         >
           {children}
         </div>
       )}
-    </div>
+    </>
   )
 }
 
