@@ -1,5 +1,6 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import Topbar from '@/components/Topbar'
 import OzetDashboard from '@/components/OzetDashboard'
@@ -23,10 +24,22 @@ import AnaKasa from '@/components/AnaKasa'
 import Fatura from '@/components/Fatura'
 import { AdminOnayProvider } from '@/components/AdminOnaySistemi'
 
-export default function Dashboard() {
-  const [aktifSayfa, setAktifSayfa] = useState('ozet')
+function DashboardInner() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  const [aktifSayfa, setAktifSayfa] = useState(() => searchParams.get('sayfa') || 'ozet')
   const [sidebarAcik, setSidebarAcik] = useState(false)
-  const [aktifCariId, setAktifCariId] = useState<string|null>(null)
+  const [aktifCariId, setAktifCariId] = useState<string|null>(() => searchParams.get('cari'))
+
+  // URL'i state ile senkron tut — sayfa yenilenince (F5) aynı sayfada kalınsın
+  useEffect(() => {
+    const params = new URLSearchParams()
+    params.set('sayfa', aktifSayfa)
+    if (aktifSayfa === 'cari_detay' && aktifCariId) params.set('cari', aktifCariId)
+    router.replace(`/dashboard?${params.toString()}`, { scroll: false })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aktifSayfa, aktifCariId])
 
   function sayfaDegis(s: string) {
     if (s.startsWith('cari_')) {
@@ -97,5 +110,13 @@ export default function Dashboard() {
       </div>
     </div>
     </AdminOnayProvider>
+  )
+}
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: 'var(--tx2)' }}>Yükleniyor...</div>}>
+      <DashboardInner />
+    </Suspense>
   )
 }
