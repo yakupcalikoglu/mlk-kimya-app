@@ -68,7 +68,7 @@ body {
 .sc { background: var(--surf); border: 1px solid var(--bdr); border-radius: var(--rl); padding: 13px 14px; box-shadow: none; border-left: 3px solid transparent; transition: transform .15s ease, box-shadow .15s ease; min-width: 0; overflow: hidden; }
 .sc:hover { transform: translateY(-1px); box-shadow: var(--sh); }
 .sc .l { font-size: 9px; font-weight: 700; color: var(--tx2); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sc .v { font-size: clamp(14px, 1.7vw, 20px); font-weight: 700; line-height: 1.2; letter-spacing: -.2px; font-variant-numeric: tabular-nums; word-break: break-word; overflow-wrap: break-word; }
+.sc .v { font-size: clamp(13px, 1.25vw, 17px); font-weight: 700; line-height: 1.2; letter-spacing: -.1px; font-variant-numeric: tabular-nums; word-break: break-word; overflow-wrap: break-word; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sc .s { font-size: 10px; color: var(--tx2); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sc.G { border-left-color: var(--g); } .sc.G .v { color: var(--g); }
 .sc.R { border-left-color: var(--r); } .sc.R .v { color: var(--r); }
