@@ -33,6 +33,7 @@ export default function CariVirman() {
   const [yukleniyor, setYukleniyor] = useState(true)
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState<any>({ tarih: today(), konu: 'para' })
+  const [duzenlenen, setDuzenlenen] = useState<any>(null)
   const [kaydediliyor, setKaydediliyor] = useState(false)
   const [sira, setSira] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
 
@@ -60,6 +61,48 @@ export default function CariVirman() {
 
   const konu = form.konu || 'para'
 
+  // Bir virman kaydının cari hareketlerine etkisini geri alır (log satırını SİLMEZ — düzenleme akışında kullanılır)
+  async function virmanEtkisiniGeriAl(v: any) {
+    const kaynak = cariler.find(c => c.id === v.kaynak_id)
+    if (kaynak) {
+      let har = (kaynak.hareketler || []).filter((h: any) =>
+        v.kaynak_har_id ? h.id !== v.kaynak_har_id
+          : !(h.tur === 'virman_cikis' && h.tarih === v.tarih && h.tahsilat === v.tutar)
+      )
+      let bak = 0
+      har = har.map((h: any) => { bak += (h.tutar||0)-(h.tahsilat||0); return {...h, bakiye: bak} })
+      await fetch(`/api/cariler/${v.kaynak_id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ hareketler: har })
+      })
+    }
+    const hedef = cariler.find(c => c.id === v.hedef_id)
+    if (hedef) {
+      let har = (hedef.hareketler || []).filter((h: any) =>
+        v.hedef_har_id ? h.id !== v.hedef_har_id
+          : !(h.tur === 'virman_giris' && h.tarih === v.tarih && h.tutar === v.tutar)
+      )
+      let bak = 0
+      har = har.map((h: any) => { bak += (h.tutar||0)-(h.tahsilat||0); return {...h, bakiye: bak} })
+      await fetch(`/api/cariler/${v.hedef_id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ hareketler: har })
+      })
+    }
+    // cariler state'ini güncel tut ki hemen ardından uygulanacak yeni etki doğru bakiye üzerinden hesaplansın
+    await yukle()
+  }
+
+  function duzenleAc(v: any) {
+    setDuzenlenen(v)
+    setForm({
+      tarih: v.tarih, konu: v.konu || 'para', kaynakId: v.kaynak_id, hedefId: v.hedef_id,
+      tutar: v.konu === 'para' || !v.konu ? v.tutar : undefined,
+      adet: v.adet, birimFiyat: v.birim_fiyat, acik: v.acik,
+    })
+    setModal(true)
+  }
+
   async function virmanYap() {
     if (!form.kaynakId || !form.hedefId) { alert('Kaynak ve hedef cari seçin!'); return }
     if (form.kaynakId === form.hedefId) { alert('Kaynak ve hedef aynı olamaz!'); return }
@@ -76,6 +119,11 @@ export default function CariVirman() {
     }
 
     setKaydediliyor(true)
+
+    // Düzenleme ise önce eski etkiyi geri al (ilgili cari hareketleri kaldırılır, bakiyeler yeniden hesaplanır)
+    if (duzenlenen) {
+      await virmanEtkisiniGeriAl(duzenlenen)
+    }
 
     const tarih = form.tarih || today()
     const acik = form.acik || ''
@@ -117,17 +165,27 @@ export default function CariVirman() {
       })
     ])
 
-    await fetch('/api/virman', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-      body: JSON.stringify({
-        tarih, konu, kaynak_id: form.kaynakId, hedef_id: form.hedefId,
-        adet, birim_fiyat: birimFiyat, tutar, acik,
-        kaynak_har_id: kaynakHarId, hedef_har_id: hedefHarId
+    const virmanBody = {
+      tarih, konu, kaynak_id: form.kaynakId, hedef_id: form.hedefId,
+      adet, birim_fiyat: birimFiyat, tutar, acik,
+      kaynak_har_id: kaynakHarId, hedef_har_id: hedefHarId
+    }
+
+    if (duzenlenen) {
+      await fetch(`/api/virman/${duzenlenen.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify(virmanBody)
       })
-    })
+    } else {
+      await fetch('/api/virman', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify(virmanBody)
+      })
+    }
 
     await yukle()
     setModal(false)
+    setDuzenlenen(null)
     setForm({ tarih: today(), konu: 'para' })
     setKaydediliyor(false)
   }
@@ -174,7 +232,7 @@ export default function CariVirman() {
       <div className="card">
         <div className="ch">🔄 Cari Virman
           <div className="ch-actions">
-            <button className="btn xs pr" onClick={() => { setForm({ tarih: today(), konu: 'para' }); setModal(true) }}>
+            <button className="btn xs pr" onClick={() => { setDuzenlenen(null); setForm({ tarih: today(), konu: 'para' }); setModal(true) }}>
               + Yeni Virman
             </button>
           </div>
@@ -207,7 +265,10 @@ export default function CariVirman() {
                     <td className="tr">{v.konu === 'para' ? '—' : '₺' + fmt(v.birim_fiyat)}</td>
                     <td className="tr" style={{ fontWeight: 700 }}>₺{fmt(v.tutar)}</td>
                     <td style={{ fontSize: 11, color: 'var(--tx2)' }}>{v.acik || '—'}</td>
-                    <td><IslemlerMenu><IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => virmanSil(v)}>Sil</IslemlerMenu.Item></IslemlerMenu></td>
+                    <td><IslemlerMenu>
+                      <IslemlerMenu.Item ikon="✏️" onClick={() => duzenleAc(v)}>Düzenle</IslemlerMenu.Item>
+                      <IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => virmanSil(v)}>Sil</IslemlerMenu.Item>
+                    </IslemlerMenu></td>
                   </tr>
                 )
               })}
@@ -220,11 +281,11 @@ export default function CariVirman() {
       </div>
 
       {modal && (
-        <div className="modal-overlay" {...overlayProps(() => setModal(false))}>
+        <div className="modal-overlay" {...overlayProps(() => { setModal(false); setDuzenlenen(null) })}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
             <div className="modal-head">
-              🔄 Cari Virman
-              <button onClick={() => setModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button>
+              {duzenlenen ? '✏️ Virman Düzenle' : '🔄 Cari Virman'}
+              <button onClick={() => { setModal(false); setDuzenlenen(null) }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button>
             </div>
             <div className="modal-body">
               <div className="finfo" style={{ marginBottom: 12 }}>
@@ -292,9 +353,9 @@ export default function CariVirman() {
               )}
             </div>
             <div className="modal-foot">
-              <button className="btn" onClick={() => setModal(false)}>İptal</button>
+              <button className="btn" onClick={() => { setModal(false); setDuzenlenen(null) }}>İptal</button>
               <button className="btn pr" onClick={virmanYap} disabled={kaydediliyor}>
-                {kaydediliyor ? 'İşleniyor...' : '🔄 Virman Yap'}
+                {kaydediliyor ? 'İşleniyor...' : (duzenlenen ? '💾 Güncelle' : '🔄 Virman Yap')}
               </button>
             </div>
           </div>

@@ -50,6 +50,7 @@ export default function Fatura() {
   const [yazdirFatura, setYazdirFatura] = useState<Fatura | null>(null)
   const [kaydediliyor, setKaydediliyor] = useState(false)
   const [sira, setSira] = useState<SiraState>({ alan: 'tarih', yon: 'desc' })
+  const [duzenlenenId, setDuzenlenenId] = useState<number | null>(null)
 
   const [tarih, setTarih] = useState(today())
   const [faturaNo, setFaturaNo] = useState(yeniFaturaNo())
@@ -74,6 +75,7 @@ export default function Fatura() {
   useEffect(() => { yukle() }, [])
 
   function modalAc() {
+    setDuzenlenenId(null)
     setTarih(today())
     setFaturaNo(yeniFaturaNo())
     setCariId('')
@@ -82,6 +84,19 @@ export default function Fatura() {
     setMusteriVergiNo('')
     setNotlar('')
     setKalemler([{ id: 'k1', urun: '', miktar: 1, birim: 0, kdv: 20 }])
+    setModal(true)
+  }
+
+  function duzenleAc(f: Fatura) {
+    setDuzenlenenId(f.id)
+    setTarih(f.tarih)
+    setFaturaNo(f.fatura_no)
+    setCariId(f.cari_id || '')
+    setMusteriAd(f.musteri_ad)
+    setMusteriAdres(f.musteri_adres || '')
+    setMusteriVergiNo(f.musteri_vergi_no || '')
+    setNotlar(f.notlar || '')
+    setKalemler(f.kalemler.length ? f.kalemler : [{ id: 'k1', urun: '', miktar: 1, birim: 0, kdv: 20 }])
     setModal(true)
   }
 
@@ -109,19 +124,26 @@ export default function Fatura() {
     if (!musteriAd.trim()) { alert('Müşteri adı zorunludur!'); return }
     if (!kalemler.some(k => k.urun.trim() && k.miktar > 0)) { alert('En az bir geçerli kalem giriniz!'); return }
     setKaydediliyor(true)
-    await fetch('/api/faturalar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        fatura_no: faturaNo, tarih, cari_id: cariId || null,
-        musteri_ad: musteriAd, musteri_adres: musteriAdres, musteri_vergi_no: musteriVergiNo,
-        kalemler, ara_toplam: araToplam, kdv_toplam: kdvToplam, genel_toplam: genelToplam,
-        notlar,
-      }),
-    })
+    const payload = {
+      fatura_no: faturaNo, tarih, cari_id: cariId || null,
+      musteri_ad: musteriAd, musteri_adres: musteriAdres, musteri_vergi_no: musteriVergiNo,
+      kalemler, ara_toplam: araToplam, kdv_toplam: kdvToplam, genel_toplam: genelToplam,
+      notlar,
+    }
+    if (duzenlenenId) {
+      await fetch(`/api/faturalar/${duzenlenenId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify(payload),
+      })
+    } else {
+      await fetch('/api/faturalar', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify(payload),
+      })
+    }
     setKaydediliyor(false)
     setModal(false)
+    setDuzenlenenId(null)
     yukle()
   }
 
@@ -177,6 +199,7 @@ export default function Fatura() {
                   <td>
                     <IslemlerMenu>
                       <IslemlerMenu.Item ikon="🖨️" onClick={() => setYazdirFatura(f)}>Görüntüle / Yazdır</IslemlerMenu.Item>
+                      <IslemlerMenu.Item ikon="✏️" onClick={() => duzenleAc(f)}>Düzenle</IslemlerMenu.Item>
                       <IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => sil(f.id)}>Sil</IslemlerMenu.Item>
                     </IslemlerMenu>
                   </td>
@@ -192,8 +215,8 @@ export default function Fatura() {
         <div className="modal-overlay" {...overlayProps(() => setModal(false))}>
           <div className="modal-box xl" onClick={e => e.stopPropagation()}>
             <div className="modal-head">
-              ✍️ Fatura Oluştur
-              <button onClick={() => setModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button>
+              {duzenlenenId ? '✏️ Fatura Düzenle' : '✍️ Fatura Oluştur'}
+              <button onClick={() => { setModal(false); setDuzenlenenId(null) }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button>
             </div>
             <div className="modal-body">
               <div className="fg2">
@@ -255,8 +278,8 @@ export default function Fatura() {
               </div>
             </div>
             <div className="modal-foot">
-              <button className="btn" onClick={() => setModal(false)}>İptal</button>
-              <button className="btn pr" onClick={kaydet} disabled={kaydediliyor}>{kaydediliyor ? 'Kaydediliyor...' : '💾 Kaydet'}</button>
+              <button className="btn" onClick={() => { setModal(false); setDuzenlenenId(null) }}>İptal</button>
+              <button className="btn pr" onClick={kaydet} disabled={kaydediliyor}>{kaydediliyor ? 'Kaydediliyor...' : (duzenlenenId ? '💾 Güncelle' : '💾 Kaydet')}</button>
             </div>
           </div>
         </div>

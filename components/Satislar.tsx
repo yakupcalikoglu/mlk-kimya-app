@@ -27,6 +27,7 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
   const [yukleniyor, setYukleniyor] = useState(true)
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState<any>({ tarih: today(), pesinAlinan: 0 })
+  const [duzenlenen, setDuzenlenen] = useState<{ cariId: string; harId: number } | null>(null)
   const [tahsilModal, setTahsilModal] = useState<{ open: boolean; satis: any | null }>({ open: false, satis: null })
   const [kaydediliyor, setKaydediliyor] = useState(false)
   const [filtreCari, setFiltreCari] = useState('')
@@ -95,10 +96,34 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
     if (!form.adet || !form.birim) { alert('Adet ve birim fiyat girin!'); return }
     setKaydediliyor(true)
 
+    const tutar = parseFloat(form.adet) * parseFloat(form.birim)
+
+    if (duzenlenen) {
+      // Düzenleme: sadece satış hareketinin kendi alanlarını güncelle,
+      // bağlı tahsilatlara dokunma, sonra tüm bakiye zincirini yeniden hesapla.
+      const c = cariler.find(x => x.id === duzenlenen.cariId)
+      let hareketler = (c?.hareketler || []).map((h: any) =>
+        h.id === duzenlenen.harId
+          ? { ...h, tarih: form.tarih || today(), fatno: form.fatno || '', adet: parseFloat(form.adet), birim: parseFloat(form.birim), tutar, acik: form.acik || '', lot: form.lot || null }
+          : h
+      )
+      let bak = 0
+      hareketler = hareketler.map((h: any) => { bak += (h.tutar||0)-(h.tahsilat||0); return {...h, bakiye: bak} })
+      await fetch(`/api/cariler/${duzenlenen.cariId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ hareketler })
+      })
+      await yukle()
+      setModal(false)
+      setDuzenlenen(null)
+      setForm({ tarih: today(), pesinAlinan: 0 })
+      setKaydediliyor(false)
+      return
+    }
+
     const c = cariler.find(x => x.id === form.cariId)
     const hareketler = [...(c?.hareketler || [])]
     const oncekiBak = hareketler.length ? hareketler[hareketler.length - 1].bakiye : 0
-    const tutar = parseFloat(form.adet) * parseFloat(form.birim)
     const pesinAlinan = parseFloat(form.pesinAlinan || 0)
     const satisId = Date.now()
 
@@ -117,8 +142,6 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
     })
 
     // Peşin alınan varsa, bu satışa bağlı bir tahsilat hareketi olarak ekle.
-    // Bu, mevcut bakiye hesaplama zincirini (tutar - tahsilat) hiç bozmadan
-    // "bu satışa özel ne kadar tahsil edildi" bilgisini de saklamamızı sağlıyor.
     if (pesinAlinan > 0) {
       const bakiyeSonrasi = oncekiBak + tutar
       hareketler.push({
@@ -144,6 +167,12 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
     setModal(false)
     setForm({ tarih: today(), pesinAlinan: 0 })
     setKaydediliyor(false)
+  }
+
+  function satisDuzenleAc(s: any) {
+    setDuzenlenen({ cariId: s.cariId, harId: s.id })
+    setForm({ cariId: s.cariId, tarih: s.tarih, fatno: s.fatno, adet: s.adet, birim: s.birim, acik: s.acik, lot: s.lot })
+    setModal(true)
   }
 
   async function satisSil(cariId: string, harId: number) {
@@ -217,7 +246,7 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
               <option value="">Tüm Cariler</option>
               {cariler.map(c => <option key={c.id} value={c.id}>{c.ad}</option>)}
             </select>
-            <button className="btn xs pr" onClick={() => setModal(true)}>+ Satış Ekle</button>
+            <button className="btn xs pr" onClick={() => { setDuzenlenen(null); setForm({ tarih: today(), pesinAlinan: 0 }); setModal(true) }}>+ Satış Ekle</button>
           </div>
         </div>
         <div className="tw">
@@ -264,6 +293,7 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
                       {!bedelsiz && (
                         <IslemlerMenu>
                           {kalan > 0 && <IslemlerMenu.Item ikon="💰" onClick={() => setTahsilModal({ open: true, satis: s })}>Tahsilat Al</IslemlerMenu.Item>}
+                          <IslemlerMenu.Item ikon="✏️" onClick={() => satisDuzenleAc(s)}>Düzenle</IslemlerMenu.Item>
                           <IslemlerMenu.Item ikon="🗑" tehlikeli onClick={() => satisSil(s.cariId, s.id)}>Sil</IslemlerMenu.Item>
                         </IslemlerMenu>
                       )}
@@ -277,9 +307,9 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
       </div>
 
       {modal && (
-        <div className="modal-overlay" {...overlayProps(() => setModal(false))}>
+        <div className="modal-overlay" {...overlayProps(() => { setModal(false); setDuzenlenen(null) })}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
-            <div className="modal-head">+ Satış Ekle<button onClick={() => setModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button></div>
+            <div className="modal-head">{duzenlenen ? '✏️ Satış Düzenle' : '+ Satış Ekle'}<button onClick={() => { setModal(false); setDuzenlenen(null) }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button></div>
             <div className="modal-body">
               <div className="fr"><label>Cari *</label>
                 <select value={form.cariId || ''} onChange={e => setForm({ ...form, cariId: e.target.value })}>
@@ -307,14 +337,16 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
                 <div className="fr"><label>Birim Fiyat (₺) *</label><input type="number" value={form.birim || ''} onChange={e => setForm({ ...form, birim: e.target.value })} /></div>
               </div>
               <div className="finfo">Tutar: <b>₺{fmt((parseFloat(form.adet || 0)) * (parseFloat(form.birim || 0)))}</b></div>
-              <div className="fr" style={{ marginTop: 10 }}><label>💰 Peşin Alınan (₺)</label>
-                <input type="number" value={form.pesinAlinan || ''} onChange={e => setForm({ ...form, pesinAlinan: e.target.value })} placeholder="0 — hiç alınmadıysa boş bırakın" />
-              </div>
+              {!duzenlenen && (
+                <div className="fr" style={{ marginTop: 10 }}><label>💰 Peşin Alınan (₺)</label>
+                  <input type="number" value={form.pesinAlinan || ''} onChange={e => setForm({ ...form, pesinAlinan: e.target.value })} placeholder="0 — hiç alınmadıysa boş bırakın" />
+                </div>
+              )}
               <div className="fr"><label>Açıklama</label><input type="text" value={form.acik || ''} onChange={e => setForm({ ...form, acik: e.target.value })} /></div>
             </div>
             <div className="modal-foot">
-              <button className="btn" onClick={() => setModal(false)}>İptal</button>
-              <button className="btn pr" onClick={satisEkle} disabled={kaydediliyor}>{kaydediliyor ? 'Kaydediliyor...' : '💾 Kaydet'}</button>
+              <button className="btn" onClick={() => { setModal(false); setDuzenlenen(null) }}>İptal</button>
+              <button className="btn pr" onClick={satisEkle} disabled={kaydediliyor}>{kaydediliyor ? 'Kaydediliyor...' : (duzenlenen ? '💾 Güncelle' : '💾 Kaydet')}</button>
             </div>
           </div>
         </div>
