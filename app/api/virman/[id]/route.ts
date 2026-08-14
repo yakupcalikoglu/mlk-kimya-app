@@ -9,3 +9,13 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }
+
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+  const s = req.cookies.get('mlk_session'); if (!s) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
+  let u: any = null; try { u = JSON.parse(s.value) } catch {}
+  if (!u || u.role === 'goruntule') return NextResponse.json({ error: 'Yetkisiz — görüntüleme yetkisiyle silme/düzenleme yapılamaz' }, { status: 403 })
+  const body = await req.json()
+  const { data, error } = await supabase.from('mlk_virman').update(body).eq('id', params.id).select().single()
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json(data)
+}
