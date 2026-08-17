@@ -58,6 +58,16 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
     return Math.max(0, topBidonU - satilan)
   }
 
+  // Kullanıcı lot seçmediyse otomatik olarak en eski (ilk üretilen) ve
+  // yeterli stoğu olan lottan düşülür — gerçek depo mantığı (FIFO).
+  function otoLotSec(): string | null {
+    const siraliUretimler = [...uretimler].sort((a: any, b: any) => (a.tarih || '').localeCompare(b.tarih || ''))
+    for (const u of siraliUretimler) {
+      if (lotKalan(u.lot) > 0) return u.lot
+    }
+    return null
+  }
+
   useEffect(() => { yukle() }, [])
 
   // Bir satışa özel bağlı tahsilatların toplamı (peşin + sonradan alınanlar)
@@ -126,6 +136,7 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
     const oncekiBak = hareketler.length ? hareketler[hareketler.length - 1].bakiye : 0
     const pesinAlinan = parseFloat(form.pesinAlinan || 0)
     const satisId = Date.now()
+    const secilenLot = form.lot || otoLotSec()
 
     hareketler.push({
       id: satisId,
@@ -138,7 +149,7 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
       tahsilat: 0,
       bakiye: oncekiBak + tutar,
       acik: form.acik || '',
-      lot: form.lot || null,
+      lot: secilenLot,
     })
 
     // Peşin alınan varsa, bu satışa bağlı bir tahsilat hareketi olarak ekle.
@@ -321,15 +332,15 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
                 <div className="fr"><label>Tarih</label><input type="date" value={form.tarih} onChange={e => setForm({ ...form, tarih: e.target.value })} /></div>
                 <div className="fr"><label>Fatura No</label><input type="text" value={form.fatno || ''} onChange={e => setForm({ ...form, fatno: e.target.value })} /></div>
               </div>
-              <div className="fr"><label>Lot (opsiyonel — ürün stoğundan düşmek için)</label>
+              <div className="fr"><label>Lot (boş bırakılırsa otomatik seçilir — en eski stoklu lot)</label>
                 <select value={form.lot || ''} onChange={e => setForm({ ...form, lot: e.target.value })}>
-                  <option value="">— Lot belirtilmedi —</option>
+                  <option value="">— Otomatik (en eski lot) —</option>
                   {uretimler.map((u: any) => (
                     <option key={u.lot} value={u.lot}>{u.lot} — {u.urun} (Kalan: {lotKalan(u.lot)} bidon)</option>
                   ))}
                 </select>
                 <div style={{ fontSize: 11, color: 'var(--tx2)', marginTop: 3 }}>
-                  ⚠️ Lot seçmezseniz bu satış Ürün Stoğu sayfasındaki "Kalan" hesaplamasına yansımaz.
+                  ✅ Stoktan otomatik düşülür (FIFO — en önce üretilen lottan). Belirli bir lottan düşürmek isterseniz elle seçin.
                 </div>
               </div>
               <div className="fg2">

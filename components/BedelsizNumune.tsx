@@ -54,6 +54,14 @@ export default function BedelsizNumune() {
     return Math.max(0, topBidonU - satilan)
   }
 
+  function otoLotSec(): string | null {
+    const siraliUretimler = [...uretimler].sort((a: any, b: any) => (a.tarih || '').localeCompare(b.tarih || ''))
+    for (const u of siraliUretimler) {
+      if (lotKalan(u.lot) > 0) return u.lot
+    }
+    return null
+  }
+
   useEffect(() => { yukle() }, [])
 
   // Tüm bedelsiz hareketleri topla
@@ -117,7 +125,7 @@ export default function BedelsizNumune() {
         bedBorcDus: form.borcaDus,
         bedBorcYaz: false,
         bedStoktan: true,
-        lot: form.lot || null,
+        lot: form.lot || otoLotSec(),
       })
       await fetch(`/api/cariler/${form.cariId}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
@@ -247,9 +255,9 @@ export default function BedelsizNumune() {
                   <input type="text" value={form.fatno || ''} onChange={e => setForm({ ...form, fatno: e.target.value })} />
                 </div>
               </div>
-              <div className="fr"><label>Lot (opsiyonel — ürün stoğundan düşmek için)</label>
+              <div className="fr"><label>Lot (boş bırakılırsa otomatik seçilir — en eski stoklu lot)</label>
                 <select value={form.lot || ''} onChange={e => setForm({ ...form, lot: e.target.value })}>
-                  <option value="">— Lot belirtilmedi —</option>
+                  <option value="">— Otomatik (en eski lot) —</option>
                   {uretimler.map((u: any) => (
                     <option key={u.lot} value={u.lot}>{u.lot} — {u.urun} (Kalan: {lotKalan(u.lot)} bidon)</option>
                   ))}
