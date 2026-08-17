@@ -169,12 +169,24 @@ export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: 
 
   const bak = sonBakiye()
 
+  async function cariSil() {
+    if (!(await confirmAdmin(`"${cari.ad}" carisi ve TÜM hareket geçmişi (${(cari.hareketler||[]).length} kayıt) kalıcı olarak silinecek. Bu işlem geri alınamaz!`))) return
+    const res = await fetch(`/api/cariler/${cariId}`, { method: 'DELETE', credentials: 'include' })
+    if (res.ok) {
+      onBack()
+    } else {
+      const d = await res.json().catch(() => ({}))
+      alert(d.error || 'Cari silinemedi')
+    }
+  }
+
   return (
     <div>
       {/* Başlık */}
       <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16}}>
         <button className="btn" onClick={onBack}>← Geri</button>
         <h2 style={{fontSize:16,fontWeight:700,margin:0}}>{cari.ad}</h2>
+        <button className="btn xs dn" style={{marginLeft:'auto'}} onClick={cariSil}>🗑 Cariyi Sil</button>
       </div>
 
       {/* Stat kartlar */}
