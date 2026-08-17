@@ -51,7 +51,7 @@ export default function BedelsizNumune() {
         if ((h.tur === 'satis' || h.tur === 'bedelsiz_ver') && h.lot === lot) satilan += h.adet || 0
       })
     })
-    return Math.max(0, topBidonU - satilan)
+    return Math.max(0, topBidonU - satilan - (u.manuel_dusum || 0))
   }
 
   function otoLotSec(): string | null {

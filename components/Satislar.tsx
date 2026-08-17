@@ -55,7 +55,7 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
         if ((h.tur === 'satis' || h.tur === 'bedelsiz_ver') && h.lot === lot) satilan += h.adet || 0
       })
     })
-    return Math.max(0, topBidonU - satilan)
+    return Math.max(0, topBidonU - satilan - (u.manuel_dusum || 0))
   }
 
   // Kullanıcı lot seçmediyse otomatik olarak en eski (ilk üretilen) ve
