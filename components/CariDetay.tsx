@@ -29,14 +29,44 @@ export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: 
   const [duzenlenenId, setDuzenlenenId] = useState<number|null>(null)
   const [kaydediliyor, setKaydediliyor] = useState(false)
   const [sira, setSira] = useState<SiraState>({ alan: null, yon: 'desc' })
+  const [uretimler, setUretimler] = useState<any[]>([])
+  const [tumCariler, setTumCariler] = useState<any[]>([])
 
   async function yukle() {
-    const res = await fetch(`/api/cariler/${cariId}`, { credentials: 'include' })
-    if (res.ok) setCari(await res.json())
+    const [cRes, uRes, tcRes] = await Promise.all([
+      fetch(`/api/cariler/${cariId}`, { credentials: 'include' }),
+      fetch('/api/uretim', { credentials: 'include' }),
+      fetch('/api/cariler', { credentials: 'include' }),
+    ])
+    if (cRes.ok) setCari(await cRes.json())
+    if (uRes.ok) setUretimler(await uRes.json())
+    if (tcRes.ok) setTumCariler(await tcRes.json())
     setYukleniyor(false)
   }
 
   useEffect(() => { yukle() }, [cariId])
+
+  // Ürün Stoğu'ndaki gerçek kalan (manuel düzeltme dahil) — Satislar.tsx ile aynı mantık
+  function lotKalan(lot: string) {
+    const u = uretimler.find((x: any) => x.lot === lot)
+    if (!u) return 0
+    const topBidonU = (u.bidonlar || []).reduce((a: number, b: any) => a + (b.adet || 0), 0)
+    let satilan = 0
+    tumCariler.forEach((c: any) => {
+      (c.hareketler || []).forEach((h: any) => {
+        if ((h.tur === 'satis' || h.tur === 'bedelsiz_ver') && h.lot === lot) satilan += h.adet || 0
+      })
+    })
+    return Math.max(0, topBidonU - satilan - (u.manuel_dusum || 0))
+  }
+
+  function otoLotSec(): string | null {
+    const siraliUretimler = [...uretimler].sort((a: any, b: any) => (a.tarih || '').localeCompare(b.tarih || ''))
+    for (const u of siraliUretimler) {
+      if (lotKalan(u.lot) > 0) return u.lot
+    }
+    return null
+  }
 
   function sonBakiye() {
     const h = cari?.hareketler || []
@@ -60,7 +90,8 @@ export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: 
       fatno: h.fatno,
       tahsilat: h.tahsilat,
       acik: h.acik,
-      tur: h.tur
+      tur: h.tur,
+      lot: h.lot,
     })
     setModal(h.tur === 'tahsilat' ? 'tahsilat' : 'satis')
   }
@@ -75,7 +106,7 @@ export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: 
         if (h.id !== duzenlenenId) return h
         if (modal === 'satis') {
           const tutar = parseFloat(form.adet || 0) * parseFloat(form.birim || 0)
-          return { ...h, tarih: form.tarih || today(), fatno: form.fatno || '', adet: parseFloat(form.adet||0), birim: parseFloat(form.birim||0), tutar, acik: form.acik || '' }
+          return { ...h, tarih: form.tarih || today(), fatno: form.fatno || '', adet: parseFloat(form.adet||0), birim: parseFloat(form.birim||0), tutar, acik: form.acik || '', lot: form.lot || h.lot || null }
         } else {
           return { ...h, tarih: form.tarih || today(), tahsilat: parseFloat(form.tahsilat || 0), acik: form.acik || '' }
         }
@@ -92,7 +123,8 @@ export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: 
       if (modal === 'satis') {
         const tutar = parseFloat(form.adet || 0) * parseFloat(form.birim || 0)
         const oncekiBak = hareketler.length ? hareketler[hareketler.length-1].bakiye : 0
-        hareketler.push({ id, tarih: form.tarih || today(), tur: 'satis', fatno: form.fatno || '', adet: parseFloat(form.adet||0), birim: parseFloat(form.birim||0), tutar, tahsilat: 0, bakiye: oncekiBak + tutar, acik: form.acik || '' })
+        const secilenLot = form.lot || otoLotSec()
+        hareketler.push({ id, tarih: form.tarih || today(), tur: 'satis', fatno: form.fatno || '', adet: parseFloat(form.adet||0), birim: parseFloat(form.birim||0), tutar, tahsilat: 0, bakiye: oncekiBak + tutar, acik: form.acik || '', lot: secilenLot })
       } else {
         const tahsilat = parseFloat(form.tahsilat || 0)
         const oncekiBak = hareketler.length ? hareketler[hareketler.length-1].bakiye : 0
@@ -253,6 +285,17 @@ export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: 
                 {form.adet && form.birim && (
                   <div className="finfo">Toplam: ₺{fmt(parseFloat(form.adet)*parseFloat(form.birim))}</div>
                 )}
+                <div className="fr"><label>Lot (boş bırakılırsa otomatik seçilir — en eski stoklu lot)</label>
+                  <select value={form.lot || ''} onChange={e => setForm({ ...form, lot: e.target.value })}>
+                    <option value="">— Otomatik (en eski lot) —</option>
+                    {uretimler.map((u: any) => (
+                      <option key={u.lot} value={u.lot}>{u.lot} — {u.urun} (Kalan: {lotKalan(u.lot)} bidon)</option>
+                    ))}
+                  </select>
+                  <div style={{ fontSize: 11, color: 'var(--tx2)', marginTop: 3 }}>
+                    ✅ Stoktan otomatik düşülür (FIFO). Belirli bir lottan düşürmek isterseniz elle seçin.
+                  </div>
+                </div>
               </> : <>
                 <div className="fr"><label>Tahsilat Tutarı (₺)</label>
                   <SayiInput value={parseFloat(form.tahsilat) || 0} onChange={v => setForm({ ...form, tahsilat: v })} />
