@@ -198,10 +198,6 @@ export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: 
       <div className="card">
         <div className="ch">
           📋 Hareketler
-          <div className="ch-actions">
-            <button className="btn xs gn" onClick={() => { setModal('tahsilat'); setForm({tarih:today()}) }}>📥 Tahsilat</button>
-            <button className="btn xs pr" onClick={() => { setModal('satis'); setForm({tarih:today()}) }}>+ Satış</button>
-          </div>
         </div>
         <div className="tw">
           <table>
