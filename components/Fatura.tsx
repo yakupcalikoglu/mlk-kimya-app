@@ -59,20 +59,46 @@ export default function Fatura() {
   const [musteriAdres, setMusteriAdres] = useState('')
   const [musteriVergiNo, setMusteriVergiNo] = useState('')
   const [notlar, setNotlar] = useState('')
+  const [lot, setLot] = useState('')
+  const [aciklama, setAciklama] = useState('')
+  const [uretimler, setUretimler] = useState<any[]>([])
   const [kalemler, setKalemler] = useState<Kalem[]>([
     { id: 'k1', urun: '', miktar: 1, birim: 0, kdv: 20 },
   ])
 
   async function yukle() {
-    const [fRes, cRes] = await Promise.all([
+    const [fRes, cRes, uRes] = await Promise.all([
       fetch('/api/faturalar', { credentials: 'include' }),
       fetch('/api/cariler', { credentials: 'include' }),
+      fetch('/api/uretim', { credentials: 'include' }),
     ])
     if (fRes.ok) setFaturalar(await fRes.json())
     if (cRes.ok) setCariler(await cRes.json())
+    if (uRes.ok) setUretimler(await uRes.json())
     setYukleniyor(false)
   }
   useEffect(() => { yukle() }, [])
+
+  function lotKalan(l: string) {
+    const u = uretimler.find((x: any) => x.lot === l)
+    if (!u) return 0
+    const topBidonU = (u.bidonlar || []).reduce((a: number, b: any) => a + (b.adet || 0), 0)
+    let satilan = 0
+    cariler.forEach((c: any) => {
+      (c.hareketler || []).forEach((h: any) => {
+        if ((h.tur === 'satis' || h.tur === 'bedelsiz_ver') && h.lot === l) satilan += h.adet || 0
+      })
+    })
+    return Math.max(0, topBidonU - satilan - (u.manuel_dusum || 0))
+  }
+
+  function otoLotSec(): string | null {
+    const siraliUretimler = [...uretimler].sort((a: any, b: any) => (a.tarih || '').localeCompare(b.tarih || ''))
+    for (const u of siraliUretimler) {
+      if (lotKalan(u.lot) > 0) return u.lot
+    }
+    return null
+  }
 
   function modalAc() {
     setDuzenlenenId(null)
@@ -83,6 +109,8 @@ export default function Fatura() {
     setMusteriAdres('')
     setMusteriVergiNo('')
     setNotlar('')
+    setLot('')
+    setAciklama('')
     setKalemler([{ id: 'k1', urun: '', miktar: 1, birim: 0, kdv: 20 }])
     setModal(true)
   }
@@ -150,6 +178,7 @@ export default function Fatura() {
         const c = cariler.find(x => x.id === cariId)
         const hareketler = [...(c?.hareketler || [])]
         const oncekiBak = hareketler.length ? hareketler[hareketler.length - 1].bakiye : 0
+        const secilenLot = lot || otoLotSec()
         hareketler.push({
           id: Date.now(),
           tarih,
@@ -160,7 +189,8 @@ export default function Fatura() {
           tutar: genelToplam,
           tahsilat: 0,
           bakiye: oncekiBak + genelToplam,
-          acik: `Fatura: ${faturaNo}`,
+          acik: `Fatura: ${faturaNo}${aciklama ? ' — ' + aciklama : ''}`,
+          lot: secilenLot,
         })
         await fetch(`/api/cariler/${cariId}`, {
           method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
@@ -261,6 +291,21 @@ export default function Fatura() {
                   </div>
                 )}
               </div>
+              {cariId && !duzenlenenId && (
+                <div className="fg2">
+                  <div className="fr"><label>Lot / Üretim No (boş bırakılırsa otomatik — en eski stoklu lot)</label>
+                    <select value={lot} onChange={e => setLot(e.target.value)}>
+                      <option value="">— Otomatik (en eski lot) —</option>
+                      {uretimler.map((u: any) => (
+                        <option key={u.lot} value={u.lot}>{u.lot} — {u.urun} (Kalan: {lotKalan(u.lot)} bidon)</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="fr"><label>Açıklama (isteğe bağlı)</label>
+                    <input type="text" value={aciklama} onChange={e => setAciklama(e.target.value)} placeholder="ör: Fabrika teslim" />
+                  </div>
+                </div>
+              )}
               <div className="fg2">
                 <div className="fr"><label>Müşteri Adı *</label><input type="text" value={musteriAd} onChange={e => setMusteriAd(e.target.value)} /></div>
                 <div className="fr"><label>Vergi No / TC</label><input type="text" value={musteriVergiNo} onChange={e => setMusteriVergiNo(e.target.value)} /></div>
