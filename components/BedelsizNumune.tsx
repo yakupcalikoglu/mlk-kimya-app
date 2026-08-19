@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { lotKalanKoduIle, otoLotSec as otoLotSecLib } from '@/lib/stok'
 import IslemlerMenu from '@/components/IslemlerMenu'
 import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
@@ -42,24 +43,11 @@ export default function BedelsizNumune() {
   }
 
   function lotKalan(lot: string) {
-    const u = uretimler.find((x: any) => x.lot === lot)
-    if (!u) return 0
-    const topBidonU = (u.bidonlar || []).reduce((a: number, b: any) => a + (b.adet || 0), 0)
-    let satilan = 0
-    cariler.forEach((c: any) => {
-      (c.hareketler || []).forEach((h: any) => {
-        if ((h.tur === 'satis' || h.tur === 'bedelsiz_ver') && h.lot === lot) satilan += h.adet || 0
-      })
-    })
-    return Math.max(0, topBidonU - satilan - (u.manuel_dusum || 0))
+    return lotKalanKoduIle(uretimler, cariler, lot)
   }
 
   function otoLotSec(): string | null {
-    const siraliUretimler = [...uretimler].sort((a: any, b: any) => (a.tarih || '').localeCompare(b.tarih || ''))
-    for (const u of siraliUretimler) {
-      if (lotKalan(u.lot) > 0) return u.lot
-    }
-    return null
+    return otoLotSecLib(uretimler, cariler)
   }
 
   useEffect(() => { yukle() }, [])

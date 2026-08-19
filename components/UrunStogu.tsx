@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { satilanHesapla } from '@/lib/stok'
 import { overlayProps } from '@/lib/modalOverlay'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
@@ -34,17 +35,11 @@ export default function UrunStogu() {
     yukle()
   }, [])
 
-  // Satılan bidonları hesapla
+  // Satılan bidonları hesapla — paylaşılan lib/stok.ts'ten
   function satılanBidon(lot: string) {
-    let toplam = 0
-    cariler.forEach(c => {
-      (c.hareketler || []).forEach((h: any) => {
-        if ((h.tur === 'satis' || h.tur === 'bedelsiz_ver') && h.lot === lot) {
-          toplam += h.adet || 0
-        }
-      })
-    })
-    return toplam
+    const u = uretimler.find((x: any) => x.lot === lot)
+    if (!u) return 0
+    return satilanHesapla(u, cariler)
   }
 
   // Her lot için stok durumu (manuel düzeltme dahil — geçmiş kayıtlarda

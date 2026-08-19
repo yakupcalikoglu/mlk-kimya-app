@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { lotKalanKoduIle, otoLotSec as otoLotSecLib } from '@/lib/stok'
 import IslemlerMenu from '@/components/IslemlerMenu'
 import SayiInput from '@/components/SayiInput'
 import { overlayProps } from '@/lib/modalOverlay'
@@ -46,26 +47,13 @@ export default function Satislar({ onCariSec }: { onCariSec?: (id: string) => vo
   // Lot bazlı kalan bidon (Ürün Stoğu ile aynı mantık — satış/bedelsiz hareketlerinde
   // bu lota bağlı olarak düşülenler hariç tutulur)
   function lotKalan(lot: string) {
-    const u = uretimler.find((x: any) => x.lot === lot)
-    if (!u) return 0
-    const topBidonU = (u.bidonlar || []).reduce((a: number, b: any) => a + (b.adet || 0), 0)
-    let satilan = 0
-    cariler.forEach((c: any) => {
-      (c.hareketler || []).forEach((h: any) => {
-        if ((h.tur === 'satis' || h.tur === 'bedelsiz_ver') && h.lot === lot) satilan += h.adet || 0
-      })
-    })
-    return Math.max(0, topBidonU - satilan - (u.manuel_dusum || 0))
+    return lotKalanKoduIle(uretimler, cariler, lot)
   }
 
   // Kullanıcı lot seçmediyse otomatik olarak en eski (ilk üretilen) ve
   // yeterli stoğu olan lottan düşülür — gerçek depo mantığı (FIFO).
   function otoLotSec(): string | null {
-    const siraliUretimler = [...uretimler].sort((a: any, b: any) => (a.tarih || '').localeCompare(b.tarih || ''))
-    for (const u of siraliUretimler) {
-      if (lotKalan(u.lot) > 0) return u.lot
-    }
-    return null
+    return otoLotSecLib(uretimler, cariler)
   }
 
   useEffect(() => { yukle() }, [])

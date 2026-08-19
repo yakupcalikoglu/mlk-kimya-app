@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { lotDurumHesapla } from '@/lib/stok'
 import { siraliVeri, siraTikla, siraIkon, SiraState } from '@/lib/sort'
 
 function fmt(n: number) {
@@ -92,21 +93,8 @@ export default function OzetDashboard({ onCariSec }: { onCariSec?: (id: string) 
 
   const sermayeOdenen = sermaye.filter((s: any) => s.durum === 'odendi').reduce((a: number, s: any) => a + (s.tutar || 0), 0)
 
-  // Ürün stok: her lot için üretilen - satılan (UrunStogu.tsx ile aynı mantık)
-  function satılanBidon(lot: string) {
-    let toplam = 0
-    cariler.forEach(c => {
-      (c.hareketler || []).forEach((h: any) => {
-        if ((h.tur === 'satis' || h.tur === 'bedelsiz_ver') && h.lot === lot) toplam += h.adet || 0
-      })
-    })
-    return toplam
-  }
   const urunStoklari = uretimler.map((u: any) => {
-    const topBidonU = (u.bidonlar || []).reduce((a: number, b: any) => a + (b.adet || 0), 0)
-    const satilan = satılanBidon(u.lot)
-    const kalanBidon = Math.max(0, topBidonU - satilan - (u.manuel_dusum || 0))
-    const kalanKg = topBidonU > 0 ? (kalanBidon / topBidonU) * (u.toplam_kg || 0) : 0
+    const { kalanBidon, kalanKg } = lotDurumHesapla(u, cariler)
     return { kalanBidon, kalanKg }
   })
   const urunKalanBidon = urunStoklari.reduce((a, u) => a + u.kalanBidon, 0)

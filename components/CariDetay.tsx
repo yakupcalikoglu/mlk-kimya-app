@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { lotKalanKoduIle, otoLotSec as otoLotSecLib } from '@/lib/stok'
 import IslemlerMenu from '@/components/IslemlerMenu'
 import SayiInput from '@/components/SayiInput'
 import { overlayProps } from '@/lib/modalOverlay'
@@ -46,26 +47,13 @@ export default function CariDetay({ cariId, onBack }: { cariId: string, onBack: 
 
   useEffect(() => { yukle() }, [cariId])
 
-  // Ürün Stoğu'ndaki gerçek kalan (manuel düzeltme dahil) — Satislar.tsx ile aynı mantık
+  // Ürün Stoğu'ndaki gerçek kalan (manuel düzeltme dahil) — paylaşılan lib/stok.ts'ten
   function lotKalan(lot: string) {
-    const u = uretimler.find((x: any) => x.lot === lot)
-    if (!u) return 0
-    const topBidonU = (u.bidonlar || []).reduce((a: number, b: any) => a + (b.adet || 0), 0)
-    let satilan = 0
-    tumCariler.forEach((c: any) => {
-      (c.hareketler || []).forEach((h: any) => {
-        if ((h.tur === 'satis' || h.tur === 'bedelsiz_ver') && h.lot === lot) satilan += h.adet || 0
-      })
-    })
-    return Math.max(0, topBidonU - satilan - (u.manuel_dusum || 0))
+    return lotKalanKoduIle(uretimler, tumCariler, lot)
   }
 
   function otoLotSec(): string | null {
-    const siraliUretimler = [...uretimler].sort((a: any, b: any) => (a.tarih || '').localeCompare(b.tarih || ''))
-    for (const u of siraliUretimler) {
-      if (lotKalan(u.lot) > 0) return u.lot
-    }
-    return null
+    return otoLotSecLib(uretimler, tumCariler)
   }
 
   function sonBakiye() {
