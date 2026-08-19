@@ -74,7 +74,16 @@ export default function OperasyonelKasa() {
 
     // Cariye yansıt: Tahsilat'ta cari borcu azalır; Ödeme'de bir cariye
     // ödeme/iade yapılıyorsa (ör. fazla ödeme iadesi) aynı şekilde borcu azaltır.
-    if (form.cariRef) {
+    if (form.cariRef === 'engin') {
+      // Engin Hesabı, cari sistemi dışında ayrı bir defter — kasa hareketini
+      // oraya da (Tahsilat -> Engin Tahsilatı, Ödeme -> Engin Harcaması) yansıt.
+      await fetch(modal === 'tahsilat' ? '/api/engin/tahsilatlar' : '/api/engin/harcamalar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ tarih: payload.tarih, ad: payload.ad, tutar })
+      })
+    } else if (form.cariRef) {
       const c = cariler.find(x => x.id === form.cariRef)
       if (c) {
         const hareketler = [...(c.hareketler || [])]
@@ -173,6 +182,7 @@ export default function OperasyonelKasa() {
               {yukleniyor && <tr><td colSpan={6} style={{textAlign:'center',padding:20,color:'var(--tx2)'}}>Yükleniyor...</td></tr>}
               {tumHar.map(h => {
                 const cari = cariler.find(c => c.id === h.cari_ref)
+                const enginMi = h.cari_ref === 'engin'
                 return (
                   <tr key={h.id}>
                     <td className="tnw">{fmtTarih(h.tarih)}</td>
@@ -184,6 +194,7 @@ export default function OperasyonelKasa() {
                     <td>
                       {h.ad}
                       {cari && <span className="badge bB" style={{marginLeft:6,fontSize:9}}>{cari.ad.split(' ')[0]}</span>}
+                      {enginMi && <span className="badge bP" style={{marginLeft:6,fontSize:9}}>Engin</span>}
                     </td>
                     <td className="tr" style={{fontWeight:700,color:h.yon==='giris'?'var(--g)':'var(--r)'}}>
                       {h.yon==='giris'?'+':'-'}₺{fmt(h.tutar)}
@@ -222,10 +233,22 @@ export default function OperasyonelKasa() {
               </div>
               {(modal === 'tahsilat' || modal === 'odeme') && (
                 <div className="fr"><label>Cari Hesap {modal === 'odeme' && '(iade/fazla ödeme iadesi vb.)'}</label>
-                  <select value={form.cariRef||''} onChange={e=>setForm({...form,cariRef:e.target.value,ad:cariler.find(c=>c.id===e.target.value)?.ad+(modal==='tahsilat'?' TAHSİLAT':' ÖDEME/İADE')||''})}>
+                  <select value={form.cariRef||''} onChange={e=>{
+                    const val = e.target.value
+                    const ad = val === 'engin'
+                      ? 'Engin ' + (modal==='tahsilat'?'TAHSİLAT':'HARCAMA')
+                      : (cariler.find(c=>c.id===val)?.ad || '') + (val ? (modal==='tahsilat'?' TAHSİLAT':' ÖDEME/İADE') : '')
+                    setForm({...form, cariRef: val, ad})
+                  }}>
                     <option value="">— Cari seçin (isteğe bağlı) —</option>
+                    <option value="engin">👤 Engin Hesabı</option>
                     {cariler.map(c => <option key={c.id} value={c.id}>{c.ad}</option>)}
                   </select>
+                  {form.cariRef === 'engin' && (
+                    <div style={{ fontSize: 11, color: 'var(--tx2)', marginTop: 3 }}>
+                      ✅ Bu hareket aynı zamanda Engin Hesabı'na da ({modal==='tahsilat' ? 'Tahsilat' : 'Harcama'} olarak) işlenecek.
+                    </div>
+                  )}
                 </div>
               )}
               <div className="fr"><label>Tutar (₺) *</label>
