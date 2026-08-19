@@ -72,8 +72,9 @@ export default function OperasyonelKasa() {
       return
     }
 
-    // Cariye yansıt
-    if (form.cariRef && modal === 'tahsilat') {
+    // Cariye yansıt: Tahsilat'ta cari borcu azalır; Ödeme'de bir cariye
+    // ödeme/iade yapılıyorsa (ör. fazla ödeme iadesi) aynı şekilde borcu azaltır.
+    if (form.cariRef) {
       const c = cariler.find(x => x.id === form.cariRef)
       if (c) {
         const hareketler = [...(c.hareketler || [])]
@@ -82,7 +83,7 @@ export default function OperasyonelKasa() {
           id: Date.now(), tarih: payload.tarih, tur: 'tahsilat',
           fatno: '', adet: 0, birim: 0, tutar: 0,
           tahsilat: tutar, bakiye: oncekiBak - tutar,
-          acik: 'Kasa tahsilatı'
+          acik: modal === 'tahsilat' ? 'Kasa tahsilatı' : 'Kasadan cariye ödeme/iade'
         })
         await fetch(`/api/cariler/${form.cariRef}`, {
           method: 'PATCH',
@@ -219,9 +220,9 @@ export default function OperasyonelKasa() {
               <div className="fr"><label>Tarih</label>
                 <input type="date" value={form.tarih||today()} onChange={e=>setForm({...form,tarih:e.target.value})} />
               </div>
-              {modal === 'tahsilat' && (
-                <div className="fr"><label>Cari Hesap</label>
-                  <select value={form.cariRef||''} onChange={e=>setForm({...form,cariRef:e.target.value,ad:cariler.find(c=>c.id===e.target.value)?.ad+' TAHSİLAT'||''})}>
+              {(modal === 'tahsilat' || modal === 'odeme') && (
+                <div className="fr"><label>Cari Hesap {modal === 'odeme' && '(iade/fazla ödeme iadesi vb.)'}</label>
+                  <select value={form.cariRef||''} onChange={e=>setForm({...form,cariRef:e.target.value,ad:cariler.find(c=>c.id===e.target.value)?.ad+(modal==='tahsilat'?' TAHSİLAT':' ÖDEME/İADE')||''})}>
                     <option value="">— Cari seçin (isteğe bağlı) —</option>
                     {cariler.map(c => <option key={c.id} value={c.id}>{c.ad}</option>)}
                   </select>

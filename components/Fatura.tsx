@@ -135,11 +135,38 @@ export default function Fatura() {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
         body: JSON.stringify(payload),
       })
+      // Not: Düzenlemede cari hareketine dokunulmuyor — tutar değiştiyse
+      // ilgili hareketi Cari Detay sayfasından elle düzeltmeniz gerekir.
     } else {
       await fetch('/api/faturalar', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
         body: JSON.stringify(payload),
       })
+
+      // Bir cari seçilmişse, fatura tutarını otomatik olarak o carinin
+      // hesabına borç (satış) olarak işle — böylece kesilen fatura
+      // Cari Detay / Tüm Cariler listesinde de görünür.
+      if (cariId) {
+        const c = cariler.find(x => x.id === cariId)
+        const hareketler = [...(c?.hareketler || [])]
+        const oncekiBak = hareketler.length ? hareketler[hareketler.length - 1].bakiye : 0
+        hareketler.push({
+          id: Date.now(),
+          tarih,
+          tur: 'satis',
+          fatno: faturaNo,
+          adet: kalemler.reduce((a, k) => a + (k.miktar || 0), 0),
+          birim: 0,
+          tutar: genelToplam,
+          tahsilat: 0,
+          bakiye: oncekiBak + genelToplam,
+          acik: `Fatura: ${faturaNo}`,
+        })
+        await fetch(`/api/cariler/${cariId}`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+          body: JSON.stringify({ hareketler }),
+        })
+      }
     }
     setKaydediliyor(false)
     setModal(false)
@@ -228,6 +255,11 @@ export default function Fatura() {
                   <option value="">— Manuel giriş —</option>
                   {cariler.map(c => <option key={c.id} value={c.id}>{c.ad}</option>)}
                 </select>
+                {cariId && !duzenlenenId && (
+                  <div style={{ fontSize: 11, color: 'var(--tx2)', marginTop: 3 }}>
+                    ✅ Fatura tutarı otomatik olarak bu carinin hesabına borç olarak işlenecek.
+                  </div>
+                )}
               </div>
               <div className="fg2">
                 <div className="fr"><label>Müşteri Adı *</label><input type="text" value={musteriAd} onChange={e => setMusteriAd(e.target.value)} /></div>
