@@ -353,7 +353,7 @@ export default function Fatura() {
                   <button className="btn xs" onClick={kalemEkle}>+ Kalem Ekle</button>
                 </div>
                 <datalist id="urun-listesi">
-                  {[...new Set(uretimler.map((u: any) => u.urun).filter(Boolean))].map((ad: any) => (
+                  {Array.from(new Set(uretimler.map((u: any) => u.urun).filter(Boolean))).map((ad: any) => (
                     <option key={ad} value={ad} />
                   ))}
                 </datalist>
