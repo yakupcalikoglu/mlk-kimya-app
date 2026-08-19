@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { lotKalanKoduIle, otoLotSec as otoLotSecLib } from '@/lib/stok'
 import IslemlerMenu from '@/components/IslemlerMenu'
 import SayiInput from '@/components/SayiInput'
 import { overlayProps } from '@/lib/modalOverlay'
@@ -81,11 +80,24 @@ export default function Fatura() {
   useEffect(() => { yukle() }, [])
 
   function lotKalan(l: string) {
-    return lotKalanKoduIle(uretimler, cariler, l)
+    const u = uretimler.find((x: any) => x.lot === l)
+    if (!u) return 0
+    const topBidonU = (u.bidonlar || []).reduce((a: number, b: any) => a + (b.adet || 0), 0)
+    let satilan = 0
+    cariler.forEach((c: any) => {
+      (c.hareketler || []).forEach((h: any) => {
+        if ((h.tur === 'satis' || h.tur === 'bedelsiz_ver') && h.lot === l) satilan += h.adet || 0
+      })
+    })
+    return Math.max(0, topBidonU - satilan - (u.manuel_dusum || 0))
   }
 
   function otoLotSec(): string | null {
-    return otoLotSecLib(uretimler, cariler)
+    const siraliUretimler = [...uretimler].sort((a: any, b: any) => (a.tarih || '').localeCompare(b.tarih || ''))
+    for (const u of siraliUretimler) {
+      if (lotKalan(u.lot) > 0) return u.lot
+    }
+    return null
   }
 
   function modalAc() {
@@ -129,7 +141,11 @@ export default function Fatura() {
     setKalemler(prev => [...prev, { id: 'k' + Date.now(), urun: '', miktar: 1, birim: 0, kdv: 20 }])
   }
   function kalemSil(id: string) {
-    setKalemler(prev => prev.length > 1 ? prev.filter(k => k.id !== id) : prev)
+    if (kalemler.length <= 1) {
+      alert('Bir faturada en az 1 kalem olmalı — son kalemi silemezsiniz. Faturayı tamamen iptal etmek için üstteki × butonunu kullanın.')
+      return
+    }
+    setKalemler(prev => prev.filter(k => k.id !== id))
   }
 
   const araToplam = kalemler.reduce((a, k) => a + (k.miktar || 0) * (k.birim || 0), 0)
@@ -311,7 +327,9 @@ export default function Fatura() {
                         const satirToplam = (k.miktar || 0) * (k.birim || 0) * (1 + (k.kdv || 0) / 100)
                         return (
                           <tr key={k.id}>
-                            <td><input type="text" value={k.urun} onChange={e => kalemGuncelle(k.id, 'urun', e.target.value)} placeholder="Ürün adı" style={{ width: '100%' }} /></td>
+                            <td>
+                              <input type="text" list="urun-listesi" value={k.urun} onChange={e => kalemGuncelle(k.id, 'urun', e.target.value)} placeholder="Ürün adı (yazın veya listeden seçin)" style={{ width: '100%' }} />
+                            </td>
                             <td><input type="number" value={k.miktar} onChange={e => kalemGuncelle(k.id, 'miktar', Number(e.target.value))} min={0} step="0.01" style={{ width: '100%' }} /></td>
                             <td><SayiInput value={k.birim} onChange={v => kalemGuncelle(k.id, 'birim', v)} style={{ width: '100%' }} /></td>
                             <td>
@@ -334,6 +352,11 @@ export default function Fatura() {
                 <div style={{ padding: 8, borderTop: '1px solid var(--bdr)' }}>
                   <button className="btn xs" onClick={kalemEkle}>+ Kalem Ekle</button>
                 </div>
+                <datalist id="urun-listesi">
+                  {[...new Set(uretimler.map((u: any) => u.urun).filter(Boolean))].map((ad: any) => (
+                    <option key={ad} value={ad} />
+                  ))}
+                </datalist>
               </div>
 
               <div className="fr" style={{ marginTop: 10 }}><label>Notlar</label><textarea value={notlar} onChange={e => setNotlar(e.target.value)} /></div>
